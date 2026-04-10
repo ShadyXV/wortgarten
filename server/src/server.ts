@@ -52,12 +52,51 @@ app.put('/api/learn/:id', (req, res) => {
   }
 });
 
+// GET /api/sentences
+// Fetches paginated sentences with optional search
+app.get('/api/sentences', (req, res) => {
+  try {
+    const page = parseInt(req.query.page as string || '1', 10);
+    const limit = parseInt(req.query.limit as string || '20', 10);
+    const search = req.query.q as string || '';
+    const offset = (page - 1) * limit;
+
+    let query = 'SELECT * FROM sentences';
+    let countQuery = 'SELECT COUNT(*) as total FROM sentences';
+    const params: any[] = [];
+
+    if (search) {
+      query += ' WHERE english LIKE ? OR german LIKE ?';
+      countQuery += ' WHERE english LIKE ? OR german LIKE ?';
+      params.push(`%${search}%`, `%${search}%`);
+    }
+
+    query += ' ORDER BY id ASC LIMIT ? OFFSET ?';
+    
+    const countStmt = db.prepare(countQuery);
+    const totalResult = countStmt.get(...params) as { total: number };
+    
+    const stmt = db.prepare(query);
+    const sentences = stmt.all(...params, limit, offset) as SentenceRow[];
+
+    res.json({
+      sentences,
+      total: totalResult.total,
+      page,
+      totalPages: Math.ceil(totalResult.total / limit)
+    });
+  } catch (error) {
+    console.error('Error fetching sentences:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 // PUT /api/sentences/:id
-// Updates the english and german text of a sentence
+// Updates the english, german text and optional fsrs properties
 app.put('/api/sentences/:id', (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
-    const { english, german } = req.body;
+    const { english, german, fsrs_difficulty, is_learning } = req.body;
 
     if (isNaN(id)) {
       res.status(400).json({ error: 'Invalid ID parameter' });
@@ -69,15 +108,31 @@ app.put('/api/sentences/:id', (req, res) => {
       return;
     }
 
-    const stmt = db.prepare('UPDATE sentences SET english = ?, german = ? WHERE id = ?');
-    const result = stmt.run(english, german, id);
+    // Determine what to update
+    const updates: string[] = ['english = ?', 'german = ?'];
+    const params: any[] = [english, german];
+
+    if (fsrs_difficulty !== undefined) {
+      updates.push('fsrs_difficulty = ?');
+      params.push(fsrs_difficulty);
+    }
+    
+    if (is_learning !== undefined) {
+      updates.push('is_learning = ?');
+      params.push(is_learning);
+    }
+
+    params.push(id);
+
+    const stmt = db.prepare(`UPDATE sentences SET ${updates.join(', ')} WHERE id = ?`);
+    const result = stmt.run(...params);
 
     if (result.changes === 0) {
       res.status(404).json({ error: 'Sentence not found' });
       return;
     }
 
-    res.json({ success: true, id, english, german });
+    res.json({ success: true, id, english, german, fsrs_difficulty, is_learning });
   } catch (error) {
     console.error(`Error updating sentence ${req.params.id}:`, error);
     res.status(500).json({ error: 'Internal Server Error' });

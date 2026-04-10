@@ -7,6 +7,7 @@ import LearnView from './views/LearnView';
 import TestView from './views/TestView';
 import RandomView from './views/RandomView';
 import StatsView from './views/StatsView';
+import ManageView from './views/ManageView';
 
 function App() {
   const [learnSentences, setLearnSentences] = useState<Sentence[]>([]);
@@ -50,6 +51,7 @@ function App() {
             <Route path="/test" element={<TestView />} />
             <Route path="/random" element={<RandomView />} />
             <Route path="/stats" element={<StatsView />} />
+            <Route path="/manage" element={<ManageView />} />
             <Route path="*" element={<Navigate to="/learn" replace />} />
           </Routes>
         </main>

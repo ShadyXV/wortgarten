@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Terminal, Cpu, Shuffle, Activity } from 'lucide-react';
+import { Terminal, Cpu, Shuffle, Activity, Database } from 'lucide-react';
 
 const Navbar: React.FC = () => {
   const links = [
@@ -8,6 +8,7 @@ const Navbar: React.FC = () => {
     { label: 'Review', path: '/test', icon: <Cpu className="w-4 h-4" /> },
     { label: 'Practice', path: '/random', icon: <Shuffle className="w-4 h-4" /> },
     { label: 'Stats', path: '/stats', icon: <Activity className="w-4 h-4" /> },
+    { label: 'Manage', path: '/manage', icon: <Database className="w-4 h-4" /> },
   ];
 
   return (

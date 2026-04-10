@@ -14,8 +14,8 @@ export const markAsLearning = async (id: number): Promise<{ success: boolean; id
   return res.json();
 };
 
-export const fetchDueTest = async (): Promise<Sentence[]> => {
-  const res = await fetch(`${API_BASE}/test/due`);
+export const fetchDueTest = async (mode: string = 'all'): Promise<Sentence[]> => {
+  const res = await fetch(`${API_BASE}/test/due?mode=${mode}`);
   if (!res.ok) throw new Error('Failed to fetch due sentences');
   return res.json();
 };
@@ -66,7 +66,13 @@ export const fetchStatsHeatmap = async () => {
   return res.json();
 };
 
-export const updateSentence = async (id: number, data: { english: string; german: string }) => {
+export const fetchManageSentences = async (page: number, query: string = '') => {
+  const res = await fetch(`${API_BASE}/sentences?page=${page}&limit=20&q=${encodeURIComponent(query)}`);
+  if (!res.ok) throw new Error('Failed to fetch sentences for management');
+  return res.json();
+};
+
+export const updateSentence = async (id: number, data: { english: string; german: string; fsrs_difficulty?: number; is_learning?: number }) => {
   const res = await fetch(`${API_BASE}/sentences/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
