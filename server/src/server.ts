@@ -59,16 +59,39 @@ app.get('/api/sentences', (req, res) => {
     const page = parseInt(req.query.page as string || '1', 10);
     const limit = parseInt(req.query.limit as string || '20', 10);
     const search = req.query.q as string || '';
+    const difficulty = req.query.difficulty as string || 'all';
     const offset = (page - 1) * limit;
 
     let query = 'SELECT * FROM sentences';
     let countQuery = 'SELECT COUNT(*) as total FROM sentences';
     const params: any[] = [];
+    let hasWhere = false;
 
     if (search) {
-      query += ' WHERE english LIKE ? OR german LIKE ?';
-      countQuery += ' WHERE english LIKE ? OR german LIKE ?';
+      query += ' WHERE (english LIKE ? OR german LIKE ?)';
+      countQuery += ' WHERE (english LIKE ? OR german LIKE ?)';
       params.push(`%${search}%`, `%${search}%`);
+      hasWhere = true;
+    }
+
+    if (difficulty !== 'all') {
+      const prefix = hasWhere ? ' AND' : ' WHERE';
+      let diffCond = '';
+      
+      if (difficulty === 'easy') {
+        diffCond = 'is_learning = 1 AND IFNULL(fsrs_difficulty, 5.0) <= 3.0';
+      } else if (difficulty === 'good') {
+        diffCond = 'is_learning = 1 AND IFNULL(fsrs_difficulty, 5.0) > 3.0 AND IFNULL(fsrs_difficulty, 5.0) < 6.0';
+      } else if (difficulty === 'hard') {
+        diffCond = 'is_learning = 1 AND IFNULL(fsrs_difficulty, 5.0) >= 6.0 AND IFNULL(fsrs_difficulty, 5.0) < 8.0';
+      } else if (difficulty === 'again') {
+        diffCond = 'is_learning = 1 AND IFNULL(fsrs_difficulty, 5.0) >= 8.0';
+      }
+
+      if (diffCond) {
+        query += prefix + ' ' + diffCond;
+        countQuery += prefix + ' ' + diffCond;
+      }
     }
 
     query += ' ORDER BY id ASC LIMIT ? OFFSET ?';
@@ -139,6 +162,35 @@ app.put('/api/sentences/:id', (req, res) => {
   }
 });
 
+// GET /api/test/counts
+// Fetches counts for review session setup modes
+app.get('/api/test/counts', (req, res) => {
+  try {
+    const stmt = db.prepare(`
+      SELECT
+        SUM(CASE WHEN (fsrs_due <= datetime('now', 'localtime') OR fsrs_due IS NULL OR fsrs_due <= CURRENT_TIMESTAMP) THEN 1 ELSE 0 END) as "all_count",
+        SUM(CASE WHEN IFNULL(fsrs_difficulty, 5.0) <= 3.0 THEN 1 ELSE 0 END) as "easy",
+        SUM(CASE WHEN IFNULL(fsrs_difficulty, 5.0) > 3.0 AND IFNULL(fsrs_difficulty, 5.0) < 6.0 THEN 1 ELSE 0 END) as "good",
+        SUM(CASE WHEN IFNULL(fsrs_difficulty, 5.0) >= 6.0 AND IFNULL(fsrs_difficulty, 5.0) < 8.0 THEN 1 ELSE 0 END) as "hard",
+        SUM(CASE WHEN IFNULL(fsrs_difficulty, 5.0) >= 8.0 THEN 1 ELSE 0 END) as "again"
+      FROM sentences
+      WHERE is_learning = 1
+    `);
+    const result = stmt.get() as any;
+    
+    res.json({
+      all: result.all_count || 0,
+      easy: result.easy || 0,
+      good: result.good || 0,
+      hard: result.hard || 0,
+      again: result.again || 0
+    });
+  } catch (error) {
+    console.error('Error fetching test counts:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 // GET /api/test/due
 // Fetches sentences that are due for FSRS review
 app.get('/api/test/due', (req, res) => {
@@ -147,11 +199,14 @@ app.get('/api/test/due', (req, res) => {
     let difficultyFilter = '';
     let dueFilter = "AND (fsrs_due <= datetime('now', 'localtime') OR fsrs_due IS NULL OR fsrs_due <= CURRENT_TIMESTAMP)";
     
-    if (mode === 'hard') {
-      difficultyFilter = ' AND IFNULL(fsrs_difficulty, 5.0) > 5.0';
+    if (mode === 'again') {
+      difficultyFilter = ' AND IFNULL(fsrs_difficulty, 5.0) >= 8.0';
+      dueFilter = '';
+    } else if (mode === 'hard') {
+      difficultyFilter = ' AND IFNULL(fsrs_difficulty, 5.0) >= 6.0 AND IFNULL(fsrs_difficulty, 5.0) < 8.0';
       dueFilter = ''; // Ignore due date for targeted cramming
     } else if (mode === 'good') {
-      difficultyFilter = ' AND IFNULL(fsrs_difficulty, 5.0) > 3.0 AND IFNULL(fsrs_difficulty, 5.0) <= 5.0';
+      difficultyFilter = ' AND IFNULL(fsrs_difficulty, 5.0) > 3.0 AND IFNULL(fsrs_difficulty, 5.0) < 6.0';
       dueFilter = '';
     } else if (mode === 'easy') {
       difficultyFilter = ' AND IFNULL(fsrs_difficulty, 5.0) <= 3.0';

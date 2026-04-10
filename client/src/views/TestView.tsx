@@ -1,17 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Sentence } from '../types';
-import { fetchDueTest, submitReview } from '../api';
+import { fetchDueTest, submitReview, fetchTestCounts } from '../api';
 import { Cpu, Volume2, Target, Settings, Play, Activity } from 'lucide-react';
 
 const TestView: React.FC = () => {
   const navigate = useNavigate();
   const [sessionStarted, setSessionStarted] = useState(false);
-  const [selectedMode, setSelectedMode] = useState<'all' | 'hard' | 'easy'>('all');
+  const [selectedMode, setSelectedMode] = useState<'all' | 'again' | 'hard' | 'good' | 'easy'>('all');
   
   const [testSentences, setTestSentences] = useState<Sentence[]>([]);
   const [isRevealed, setIsRevealed] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [counts, setCounts] = useState({ all: 0, again: 0, hard: 0, good: 0, easy: 0 });
   
   // HUD Stats & Timers
   const [sessionStats, setSessionStats] = useState({ 
@@ -21,6 +22,12 @@ const TestView: React.FC = () => {
     firstTryCorrect: 0
   });
   const [startTime, setStartTime] = useState(Date.now());
+
+  useEffect(() => {
+    if (!sessionStarted) {
+      fetchTestCounts().then(setCounts).catch(console.error);
+    }
+  }, [sessionStarted]);
 
   const startSession = () => {
     setLoading(true);
@@ -113,29 +120,65 @@ const TestView: React.FC = () => {
             Select a target difficulty mode for your upcoming review session.
           </p>
           
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <button
               onClick={() => setSelectedMode('all')}
-              className={`w-full flex items-center justify-between p-4 rounded-md border transition-all duration-200 ${
+              className={`w-full md:col-span-2 flex items-center justify-between p-4 rounded-md border transition-all duration-200 ${
                 selectedMode === 'all' 
                   ? 'bg-slate-800/80 border-cyan-500/50 text-cyan-400' 
                   : 'bg-slate-900/50 border-slate-800 text-slate-400 hover:border-slate-700 hover:bg-slate-800/50'
               }`}
             >
-              <span className="font-sans font-medium">Standard</span>
-              <span className="text-xs font-mono uppercase opacity-70">All Due Cards</span>
+              <div className="flex flex-col items-start">
+                <span className="font-sans font-medium">Standard</span>
+                <span className="text-[10px] font-mono uppercase opacity-70">All Due Cards</span>
+              </div>
+              <span className="text-lg font-mono">{counts.all}</span>
+            </button>
+
+            <button
+              onClick={() => setSelectedMode('again')}
+              className={`w-full flex items-center justify-between p-4 rounded-md border transition-all duration-200 ${
+                selectedMode === 'again' 
+                  ? 'bg-slate-800/80 border-rose-500/50 text-rose-400' 
+                  : 'bg-slate-900/50 border-slate-800 text-slate-400 hover:border-slate-700 hover:bg-slate-800/50'
+              }`}
+            >
+              <div className="flex flex-col items-start">
+                <span className="font-sans font-medium">Again Focus</span>
+                <span className="text-[10px] font-mono uppercase opacity-70">Difficulty &ge; 8.0</span>
+              </div>
+              <span className="text-lg font-mono">{counts.again}</span>
             </button>
 
             <button
               onClick={() => setSelectedMode('hard')}
               className={`w-full flex items-center justify-between p-4 rounded-md border transition-all duration-200 ${
                 selectedMode === 'hard' 
-                  ? 'bg-slate-800/80 border-rose-500/50 text-rose-400' 
+                  ? 'bg-slate-800/80 border-orange-500/50 text-orange-400' 
                   : 'bg-slate-900/50 border-slate-800 text-slate-400 hover:border-slate-700 hover:bg-slate-800/50'
               }`}
             >
-              <span className="font-sans font-medium">Hard Focus</span>
-              <span className="text-xs font-mono uppercase opacity-70">Difficulty &gt; 5.0</span>
+              <div className="flex flex-col items-start">
+                <span className="font-sans font-medium">Hard Focus</span>
+                <span className="text-[10px] font-mono uppercase opacity-70">Difficulty 6.0 - 7.9</span>
+              </div>
+              <span className="text-lg font-mono">{counts.hard}</span>
+            </button>
+
+            <button
+              onClick={() => setSelectedMode('good')}
+              className={`w-full flex items-center justify-between p-4 rounded-md border transition-all duration-200 ${
+                selectedMode === 'good' 
+                  ? 'bg-slate-800/80 border-cyan-500/50 text-cyan-400' 
+                  : 'bg-slate-900/50 border-slate-800 text-slate-400 hover:border-slate-700 hover:bg-slate-800/50'
+              }`}
+            >
+              <div className="flex flex-col items-start">
+                <span className="font-sans font-medium">Good Review</span>
+                <span className="text-[10px] font-mono uppercase opacity-70">Difficulty 3.1 - 5.9</span>
+              </div>
+              <span className="text-lg font-mono">{counts.good}</span>
             </button>
 
             <button
@@ -146,8 +189,11 @@ const TestView: React.FC = () => {
                   : 'bg-slate-900/50 border-slate-800 text-slate-400 hover:border-slate-700 hover:bg-slate-800/50'
               }`}
             >
-              <span className="font-sans font-medium">Easy Review</span>
-              <span className="text-xs font-mono uppercase opacity-70">Difficulty &le; 3.0</span>
+              <div className="flex flex-col items-start">
+                <span className="font-sans font-medium">Easy Review</span>
+                <span className="text-[10px] font-mono uppercase opacity-70">Difficulty &le; 3.0</span>
+              </div>
+              <span className="text-lg font-mono">{counts.easy}</span>
             </button>
           </div>
 

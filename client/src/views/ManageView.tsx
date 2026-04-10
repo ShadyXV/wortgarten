@@ -13,11 +13,12 @@ const ManageView: React.FC = () => {
   const [totalItems, setTotalItems] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchInput, setSearchInput] = useState('');
+  const [difficultyFilter, setDifficultyFilter] = useState('all');
 
-  const loadSentences = async (currentPage: number, query: string) => {
+  const loadSentences = async (currentPage: number, query: string, diff: string) => {
     setLoading(true);
     try {
-      const data = await fetchManageSentences(currentPage, query);
+      const data = await fetchManageSentences(currentPage, query, diff);
       setSentences(data.sentences);
       setTotalPages(data.totalPages);
       setPage(data.page);
@@ -30,13 +31,18 @@ const ManageView: React.FC = () => {
   };
 
   useEffect(() => {
-    loadSentences(page, searchQuery);
-  }, [page, searchQuery]);
+    loadSentences(page, searchQuery, difficultyFilter);
+  }, [page, searchQuery, difficultyFilter]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setPage(1);
     setSearchQuery(searchInput);
+  };
+
+  const handleDifficultyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setDifficultyFilter(e.target.value);
+    setPage(1);
   };
 
   const handleUpdateSentence = (
@@ -88,21 +94,35 @@ const ManageView: React.FC = () => {
 
       {/* Toolbar */}
       <div className="bg-slate-900/80 backdrop-blur-sm border border-slate-800 rounded-lg p-4 glass-panel flex flex-col md:flex-row justify-between items-center gap-4">
-        <form onSubmit={handleSearch} className="relative w-full md:w-96 flex">
-          <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-            <Search className="h-4 w-4 text-slate-500" />
-          </div>
-          <input
-            type="text"
-            className="flex h-10 w-full rounded-l-md border border-r-0 border-slate-800 bg-slate-950/50 pl-10 pr-3 py-2 text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 focus:border-cyan-500/50 transition-all font-sans"
-            placeholder="Search English or German..."
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-          />
-          <button type="submit" className="bg-slate-800 text-slate-300 px-4 rounded-r-md border border-slate-700 hover:bg-slate-700 transition-colors text-sm font-sans">
-            Search
-          </button>
-        </form>
+        <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
+          <form onSubmit={handleSearch} className="relative w-full md:w-80 flex">
+            <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+              <Search className="h-4 w-4 text-slate-500" />
+            </div>
+            <input
+              type="text"
+              className="flex h-10 w-full rounded-l-md border border-r-0 border-slate-800 bg-slate-950/50 pl-10 pr-3 py-2 text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 focus:border-cyan-500/50 transition-all font-sans"
+              placeholder="Search English or German..."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+            />
+            <button type="submit" className="bg-slate-800 text-slate-300 px-4 rounded-r-md border border-slate-700 hover:bg-slate-700 transition-colors text-sm font-sans">
+              Search
+            </button>
+          </form>
+
+          <select
+            value={difficultyFilter}
+            onChange={handleDifficultyChange}
+            className="flex h-10 w-full md:w-40 rounded-md border border-slate-800 bg-slate-950/50 px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-cyan-500 focus:border-cyan-500/50 transition-all font-sans cursor-pointer"
+          >
+            <option value="all">All Labels</option>
+            <option value="easy">Easy</option>
+            <option value="good">Good</option>
+            <option value="hard">Hard</option>
+            <option value="again">Again</option>
+          </select>
+        </div>
 
         <div className="text-xs font-mono text-slate-500 uppercase tracking-widest">
           TOTAL_RECORDS: <span className="text-cyan-400">{totalItems}</span>

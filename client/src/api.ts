@@ -20,6 +20,12 @@ export const fetchDueTest = async (mode: string = 'all'): Promise<Sentence[]> =>
   return res.json();
 };
 
+export const fetchTestCounts = async (): Promise<{ all: number; easy: number; good: number; hard: number; again: number }> => {
+  const res = await fetch(`${API_BASE}/test/counts`);
+  if (!res.ok) throw new Error('Failed to fetch test counts');
+  return res.json();
+};
+
 export const fetchRandom = async (): Promise<Sentence> => {
   const res = await fetch(`${API_BASE}/random`);
   if (!res.ok) throw new Error('Failed to fetch random sentence');
@@ -66,8 +72,8 @@ export const fetchStatsHeatmap = async () => {
   return res.json();
 };
 
-export const fetchManageSentences = async (page: number, query: string = '') => {
-  const res = await fetch(`${API_BASE}/sentences?page=${page}&limit=20&q=${encodeURIComponent(query)}`);
+export const fetchManageSentences = async (page: number, query: string = '', difficulty: string = 'all') => {
+  const res = await fetch(`${API_BASE}/sentences?page=${page}&limit=20&q=${encodeURIComponent(query)}&difficulty=${encodeURIComponent(difficulty)}`);
   if (!res.ok) throw new Error('Failed to fetch sentences for management');
   return res.json();
 };
