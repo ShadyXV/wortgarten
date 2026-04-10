@@ -52,11 +52,62 @@ app.put('/api/learn/:id', (req, res) => {
   }
 });
 
+// PUT /api/sentences/:id
+// Updates the english and german text of a sentence
+app.put('/api/sentences/:id', (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const { english, german } = req.body;
+
+    if (isNaN(id)) {
+      res.status(400).json({ error: 'Invalid ID parameter' });
+      return;
+    }
+
+    if (!english || !german) {
+      res.status(400).json({ error: 'Both english and german fields are required' });
+      return;
+    }
+
+    const stmt = db.prepare('UPDATE sentences SET english = ?, german = ? WHERE id = ?');
+    const result = stmt.run(english, german, id);
+
+    if (result.changes === 0) {
+      res.status(404).json({ error: 'Sentence not found' });
+      return;
+    }
+
+    res.json({ success: true, id, english, german });
+  } catch (error) {
+    console.error(`Error updating sentence ${req.params.id}:`, error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 // GET /api/test/due
 // Fetches sentences that are due for FSRS review
 app.get('/api/test/due', (req, res) => {
   try {
-    const stmt = db.prepare('SELECT * FROM sentences WHERE is_learning = 1 AND (fsrs_due <= CURRENT_TIMESTAMP OR fsrs_due IS NULL) ORDER BY fsrs_due ASC LIMIT 20');
+    const mode = req.query.mode as string;
+    let difficultyFilter = '';
+    
+    if (mode === 'hard') {
+      difficultyFilter = ' AND IFNULL(fsrs_difficulty, 5.0) > 5.0';
+    } else if (mode === 'good') {
+      difficultyFilter = ' AND IFNULL(fsrs_difficulty, 5.0) > 3.0 AND IFNULL(fsrs_difficulty, 5.0) <= 5.0';
+    } else if (mode === 'easy') {
+      difficultyFilter = ' AND IFNULL(fsrs_difficulty, 5.0) <= 3.0';
+    }
+
+    const query = `
+      SELECT * FROM sentences 
+      WHERE is_learning = 1 
+        AND (fsrs_due <= datetime('now', 'localtime') OR fsrs_due IS NULL OR fsrs_due <= CURRENT_TIMESTAMP)
+        ${difficultyFilter}
+      ORDER BY fsrs_due ASC 
+      LIMIT 20
+    `;
+    const stmt = db.prepare(query);
     const sentences = stmt.all() as SentenceRow[];
     res.json(sentences);
   } catch (error) {
@@ -69,10 +120,16 @@ app.get('/api/test/due', (req, res) => {
 function calculateNextReview(currentData: SentenceRow, rating: 1 | 2 | 3 | 4) {
   const now = new Date();
   let stability = currentData.fsrs_stability || 0;
-  let difficulty = currentData.fsrs_difficulty || 5; // Unused in this simple version, kept for schema
+  let difficulty = currentData.fsrs_difficulty || 5.0; 
   let reps = (currentData.fsrs_reps || 0) + 1;
   let lapses = currentData.fsrs_lapses || 0;
   let nextDue = new Date(now);
+
+  // Dynamically update difficulty based on rating
+  if (rating === 1) difficulty = Math.min(10, difficulty + 2);
+  else if (rating === 2) difficulty = Math.min(10, difficulty + 1);
+  else if (rating === 3) difficulty = Math.max(1, difficulty - 1);
+  else if (rating === 4) difficulty = Math.max(1, difficulty - 2);
 
   if (stability === 0) {
     // New card initialization
@@ -107,7 +164,7 @@ function calculateNextReview(currentData: SentenceRow, rating: 1 | 2 | 3 | 4) {
     fsrs_difficulty: difficulty,
     fsrs_reps: reps,
     fsrs_lapses: lapses,
-    fsrs_due: nextDue.toISOString(),
+    fsrs_due: nextDue.toISOString().replace('T', ' ').split('.')[0], // SQLite safe DATETIME format
   };
 }
 

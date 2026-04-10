@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import type { Sentence } from "../types";
 import AudioButton from "../components/AudioButton";
+import EditSentenceModal from "../components/EditSentenceModal";
 import { markAsLearning } from "../api";
 import { Terminal } from "lucide-react";
 
@@ -35,6 +36,18 @@ const LearnView: React.FC<LearnViewProps> = ({
       console.error("Failed to add to test", error);
       alert("SYS.ERR: CONNECTION TO DATABASE SEVERED.");
     }
+  };
+
+  const handleUpdateSentence = (
+    id: number,
+    newEnglish: string,
+    newGerman: string,
+  ) => {
+    setSentences((prev) =>
+      prev.map((s) =>
+        s.id === id ? { ...s, english: newEnglish, german: newGerman } : s,
+      ),
+    );
   };
 
   return (
@@ -81,9 +94,14 @@ const LearnView: React.FC<LearnViewProps> = ({
               className="bg-slate-900/80 glass-panel border border-slate-800 p-6 rounded-lg relative overflow-hidden backdrop-blur-sm flex flex-col md:flex-row md:items-center justify-between gap-6 transition-all duration-200 hover:border-slate-700"
             >
               {/* Header Info */}
-              <span className="text-[10px] text-slate-500 absolute top-3 right-4 font-mono uppercase">
-                SYS.DATA.FILE_{sentence.id.toString().padStart(4, "0")}
-              </span>
+              <div className="absolute top-3 right-4 flex items-center gap-2">
+                <EditSentenceModal
+                  id={sentence.id}
+                  initialEnglish={sentence.english}
+                  initialGerman={sentence.german}
+                  onUpdate={handleUpdateSentence}
+                />
+              </div>
 
               <div className="flex-1 space-y-4 mt-4 md:mt-0">
                 {/* English */}
@@ -144,7 +162,7 @@ const LearnView: React.FC<LearnViewProps> = ({
                   onClick={() => handleAddToTest(sentence.id)}
                   className="bg-transparent border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 transition-all duration-200 uppercase text-xs font-sans py-2 px-4 rounded-md tracking-widest active:scale-95 shadow-[0_0_10px_rgba(16,185,129,0.05)]"
                 >
-                  Add to Review
+                  Add for Review
                 </button>
               </div>
             </div>

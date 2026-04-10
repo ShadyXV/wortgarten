@@ -65,3 +65,13 @@ export const fetchStatsHeatmap = async () => {
   if (!res.ok) throw new Error('Failed to fetch stats heatmap');
   return res.json();
 };
+
+export const updateSentence = async (id: number, data: { english: string; german: string }) => {
+  const res = await fetch(`${API_BASE}/sentences/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error('Failed to update sentence');
+  return res.json();
+};
