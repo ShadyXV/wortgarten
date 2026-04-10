@@ -1,34 +1,44 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
+import { Terminal, Cpu, Shuffle } from 'lucide-react';
 
 const Navbar: React.FC = () => {
   const links = [
-    { label: 'Learn', path: '/learn' },
-    { label: 'Test (FSRS)', path: '/test' },
-    { label: 'Random', path: '/random' },
+    { label: 'Learn', path: '/learn', icon: <Terminal className="w-4 h-4" /> },
+    { label: 'Review', path: '/test', icon: <Cpu className="w-4 h-4" /> },
+    { label: 'Sandbox', path: '/random', icon: <Shuffle className="w-4 h-4" /> },
   ];
 
   return (
-    <nav className="bg-white border-b border-gray-200 px-4 py-3 sticky top-0 z-10">
-      <div className="max-w-4xl mx-auto flex justify-between items-center">
-        <h1 className="text-xl font-bold text-gray-800">Antigravity Deutsch</h1>
-        <div className="flex space-x-1">
+    <nav className="bg-slate-950/90 border-b border-slate-800 px-6 py-4 sticky top-0 z-20 backdrop-blur-md transition-all duration-200">
+      <div className="max-w-4xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+        
+        <div className="flex items-center gap-3">
+          <Terminal className="w-6 h-6 text-cyan-400" />
+          <h1 className="text-xl font-sans font-semibold text-slate-200 tracking-wide">
+            Antigravity<span className="text-cyan-500 font-mono text-sm">_OS</span>
+          </h1>
+        </div>
+        
+        <div className="flex space-x-2">
           {links.map((link) => (
             <NavLink
               key={link.path}
               to={link.path}
               className={({ isActive }) =>
-                `px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                `flex items-center gap-2 px-4 py-2 rounded-md text-sm font-mono transition-all duration-200 border ${
                   isActive
-                    ? 'bg-indigo-600 text-white shadow-sm'
-                    : 'text-gray-600 hover:bg-gray-100'
+                    ? 'border-cyan-500/30 text-cyan-400 bg-cyan-500/10 shadow-[0_0_10px_rgba(34,211,238,0.05)]'
+                    : 'border-transparent text-slate-500 hover:text-slate-300 hover:bg-slate-800/50'
                 }`
               }
             >
-              {link.label}
+              {link.icon}
+              <span>{link.label}</span>
             </NavLink>
           ))}
         </div>
+
       </div>
     </nav>
   );

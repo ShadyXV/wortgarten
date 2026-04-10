@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { Sentence } from '../types';
-import AudioButton from '../components/AudioButton';
 import { fetchDueTest, submitReview } from '../api';
+import { Cpu, Volume2 } from 'lucide-react';
 
 const TestView: React.FC = () => {
   const [testSentences, setTestSentences] = useState<Sentence[]>([]);
@@ -19,86 +19,108 @@ const TestView: React.FC = () => {
 
   const handleGrade = async (grade: 'again' | 'hard' | 'good' | 'easy') => {
     if (!currentSentence) return;
-    
     const ratingMap = { again: 1, hard: 2, good: 3, easy: 4 } as const;
-    const numericRating = ratingMap[grade];
-
     try {
-      // Submit the review asynchronously
-      await submitReview(currentSentence.id, numericRating);
-      
-      // Optimistically remove the card from local state
+      await submitReview(currentSentence.id, ratingMap[grade]);
       setTestSentences(prev => prev.slice(1));
-      
-      // Reset reveal state for the next card immediately
       setIsRevealed(false);
     } catch (error) {
       console.error('Failed to submit review:', error);
-      alert('Failed to save review. Please check your connection.');
+      alert('SYS.ERR: DATABASE UPDATE FAILED.');
     }
   };
 
+  const playAudio = (filename: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const audio = new Audio(`/audio/${filename}`);
+    audio.play().catch(err => console.error("Audio playback failed", err));
+  };
+
   if (loading) {
-    return <div className="text-center py-20 text-gray-500">Loading your review deck...</div>;
+    return <div className="text-center py-20 font-mono text-cyan-500/70 animate-pulse tracking-widest text-sm">INITIALIZING REVIEW MODULE...</div>;
   }
 
   if (testSentences.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
-        <div className="bg-indigo-100 p-6 rounded-full mb-6">
-          <svg className="w-12 h-12 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-          </svg>
+        <div className="bg-slate-900/80 glass-panel border border-slate-800 p-8 rounded-lg inline-block">
+          <Cpu className="w-12 h-12 text-cyan-500/50 mb-4 mx-auto" />
+          <h2 className="text-xl font-sans font-medium text-slate-200 tracking-wide">Queue Empty</h2>
+          <p className="font-mono text-slate-500 mt-2 text-xs uppercase">All reviews completed successfully.</p>
         </div>
-        <h2 className="text-2xl font-bold text-gray-800">You're all caught up!</h2>
-        <p className="text-gray-500 mt-2">No sentences are currently due for review.</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-2xl mx-auto py-8">
-      <div className="bg-white rounded-3xl border border-gray-200 shadow-xl overflow-hidden">
-        <div className="bg-indigo-600 px-8 py-4 flex justify-between items-center text-white">
-          <span className="text-sm font-medium">Review Session</span>
-          <span className="text-sm opacity-80">{testSentences.length} Due</span>
+    <div className="max-w-2xl mx-auto py-8 transition-all duration-200">
+      {/* Header */}
+      <div className="flex items-center justify-center gap-3 mb-8 text-cyan-400/80">
+        <Cpu className="w-5 h-5" />
+        <h1 className="text-sm font-mono tracking-widest uppercase">Review Protocol</h1>
+      </div>
+
+      {/* Main Terminal Card */}
+      <div className="bg-slate-900/80 backdrop-blur-sm border border-slate-800 rounded-lg p-8 glass-panel relative overflow-hidden transition-all duration-200">
+        
+        {/* Top Meta Info */}
+        <div className="flex justify-between items-center mb-8 border-b border-slate-800/50 pb-4">
+          <span className="text-xs font-mono text-slate-500">PENDING: {testSentences.length}</span>
+          <span className="text-xs font-mono text-slate-500">ID_{currentSentence.id.toString().padStart(4, '0')}</span>
         </div>
         
-        <div className="p-12 flex flex-col items-center text-center space-y-8">
-          <div className="space-y-4">
-            <p className="text-gray-500 text-sm uppercase tracking-widest font-bold">English</p>
-            <p className="text-3xl font-semibold text-gray-900">{currentSentence.english}</p>
+        <div className="flex flex-col items-center text-center space-y-10">
+          
+          {/* Target English */}
+          <div className="space-y-3 w-full">
+            <p className="text-[10px] text-slate-500 uppercase font-mono tracking-widest">Target_EN</p>
+            <p className="text-2xl font-sans text-slate-200 font-medium tracking-tight leading-snug">
+              {currentSentence.english}
+            </p>
           </div>
 
-          <div className="w-full border-t border-gray-100 pt-8 space-y-4 min-h-[160px] flex flex-col justify-center">
+          {/* Decrypted German */}
+          <div className="w-full pt-6 space-y-6 min-h-[160px] flex flex-col justify-center">
             {isRevealed ? (
-              <div className="space-y-6">
-                {/* Audio auto-plays when German is revealed */}
+              <div className="space-y-6 animate-in fade-in zoom-in-95 duration-200">
                 <audio src={`/audio/${currentSentence.audio}`} autoPlay className="hidden" />
                 
-                <p className="text-gray-500 text-sm uppercase tracking-widest font-bold">German</p>
-                <div className="flex items-center justify-center gap-4">
-                  <p className="text-4xl font-bold text-indigo-600">{currentSentence.german}</p>
-                  <AudioButton filename={currentSentence.audio} />
+                <p className="text-[10px] text-slate-500 uppercase font-mono tracking-widest">Decrypted_DE</p>
+                <div className="flex flex-col md:flex-row items-center justify-center gap-5">
+                  <p className="text-3xl font-sans text-cyan-400 tracking-tight shadow-[0_0_10px_rgba(34,211,238,0.1)]">
+                    {currentSentence.german}
+                  </p>
+                  <button
+                    onClick={(e) => playAudio(currentSentence.audio, e)}
+                    className="p-2 rounded-full border border-cyan-500/20 text-cyan-400 hover:bg-cyan-500/10 transition-all duration-200 active:scale-95 shadow-[0_0_10px_rgba(34,211,238,0.05)]"
+                    title="Play Audio"
+                  >
+                    <Volume2 className="w-5 h-5" />
+                  </button>
                 </div>
+                {/* Grammar / Source Info */}
+                <p className="text-xs font-sans text-slate-500 mt-2">
+                  Source: <span className="text-slate-400">{currentSentence.source_word_de}</span>
+                </p>
               </div>
             ) : (
               <button
                 onClick={() => setIsRevealed(true)}
-                className="mx-auto px-8 py-4 bg-gray-900 text-white rounded-2xl font-bold hover:bg-gray-800 transition-all shadow-lg active:scale-95"
+                className="mx-auto bg-transparent border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10 transition-all duration-200 uppercase text-sm font-mono py-3 px-8 rounded-md tracking-widest active:scale-95 shadow-[0_0_10px_rgba(34,211,238,0.05)]"
               >
-                Reveal German
+                Decrypt Data
               </button>
             )}
           </div>
         </div>
 
+        {/* FSRS Control Grid */}
         {isRevealed && (
-          <div className="grid grid-cols-4 gap-px bg-gray-200 border-t border-gray-200">
-            <button onClick={() => handleGrade('again')} className="bg-white py-6 hover:bg-red-50 text-red-600 font-bold transition-colors">Again</button>
-            <button onClick={() => handleGrade('hard')} className="bg-white py-6 hover:bg-orange-50 text-orange-600 font-bold transition-colors">Hard</button>
-            <button onClick={() => handleGrade('good')} className="bg-white py-6 hover:bg-green-50 text-green-600 font-bold transition-colors">Good</button>
-            <button onClick={() => handleGrade('easy')} className="bg-white py-6 hover:bg-blue-50 text-blue-600 font-bold transition-colors">Easy</button>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-10 pt-6 border-t border-slate-800/50 animate-in slide-in-from-bottom-2 duration-200">
+            <button onClick={() => handleGrade('again')} className="border border-rose-500/30 text-rose-400 hover:bg-rose-500/10 transition-all duration-200 uppercase text-xs font-mono py-3 px-2 rounded-md tracking-widest active:scale-95">AGAIN</button>
+            <button onClick={() => handleGrade('hard')} className="border border-orange-500/30 text-orange-400 hover:bg-orange-500/10 transition-all duration-200 uppercase text-xs font-mono py-3 px-2 rounded-md tracking-widest active:scale-95">HARD</button>
+            <button onClick={() => handleGrade('good')} className="border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 transition-all duration-200 uppercase text-xs font-mono py-3 px-2 rounded-md tracking-widest active:scale-95">GOOD</button>
+            <button onClick={() => handleGrade('easy')} className="border border-blue-500/30 text-blue-400 hover:bg-blue-500/10 transition-all duration-200 uppercase text-xs font-mono py-3 px-2 rounded-md tracking-widest active:scale-95">EASY</button>
           </div>
         )}
       </div>

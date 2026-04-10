@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import type { Sentence } from '../types';
 import AudioButton from '../components/AudioButton';
 import { markAsLearning } from '../api';
+import { Terminal } from 'lucide-react';
 
 interface LearnViewProps {
   sentences: Sentence[];
@@ -27,72 +28,96 @@ const LearnView: React.FC<LearnViewProps> = ({ sentences, setSentences, onRefres
       setSentences(prev => prev.filter(s => s.id !== id));
     } catch (error) {
       console.error('Failed to add to test', error);
-      alert('Failed to add to test deck. Please try again.');
+      alert('SYS.ERR: CONNECTION TO DATABASE SEVERED.');
     }
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 max-w-3xl mx-auto transition-all duration-200">
       <div className="text-center py-4 flex flex-col items-center gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-800">New Sentences</h2>
-          <p className="text-gray-500">Learn these {sentences.length} sentences before adding them to your test deck.</p>
+        <div className="flex items-center gap-3 text-cyan-400/80 mb-2">
+          <Terminal className="w-5 h-5" />
+          <h1 className="text-sm font-mono tracking-widest uppercase">Learning Module</h1>
         </div>
+        
+        <p className="font-sans text-slate-400 text-sm tracking-tight">
+          <span className="text-cyan-400 font-mono">{sentences.length}</span> items pending decryption for new study.
+        </p>
         
         <button
           onClick={onRefresh}
           disabled={loading}
-          className="px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-full text-sm font-medium transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2"
+          className="mt-2 bg-transparent border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10 transition-all duration-200 uppercase text-xs font-mono py-2 px-6 rounded-md flex items-center gap-2 disabled:opacity-50 active:scale-95 shadow-[0_0_10px_rgba(34,211,238,0.05)]"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-          {loading ? 'Fetching...' : 'Fetch New Batch'}
+          {loading ? 'DOWNLOADING...' : 'FETCH NEW DATA BATCH'}
         </button>
       </div>
 
-      <div className="grid gap-4">
+      <div className="grid gap-6">
         {sentences.length === 0 ? (
-          <div className="bg-gray-50 p-8 text-center rounded-xl border border-dashed border-gray-300">
-            <p className="text-gray-500 italic">No sentences loaded or you've learned them all.</p>
-            <button onClick={onRefresh} className="mt-4 text-indigo-600 font-medium hover:underline">
-              Fetch a new batch
-            </button>
+          <div className="bg-slate-900/80 glass-panel border border-slate-800 p-8 rounded-lg text-center backdrop-blur-sm">
+            <span className="text-[10px] text-slate-500 font-mono uppercase">SYS.STATUS.EMPTY</span>
+            <p className="font-sans font-medium text-slate-200 text-lg mt-4 tracking-wide">No New Files in Queue</p>
+            <p className="font-mono text-slate-500 text-xs mt-2 uppercase">Request a new batch from the mainframe.</p>
           </div>
         ) : (
           sentences.map((sentence) => (
-            <div key={sentence.id} className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div className="flex-1 space-y-2">
-                <div className="flex items-center gap-3">
-                  <AudioButton filename={sentence.audio} />
-                  <p className="text-lg font-medium text-gray-900">{sentence.english}</p>
+            <div key={sentence.id} className="bg-slate-900/80 glass-panel border border-slate-800 p-6 rounded-lg relative overflow-hidden backdrop-blur-sm flex flex-col md:flex-row md:items-center justify-between gap-6 transition-all duration-200 hover:border-slate-700">
+              
+              {/* Header Info */}
+              <span className="text-[10px] text-slate-500 absolute top-3 right-4 font-mono uppercase">
+                SYS.DATA.FILE_{sentence.id.toString().padStart(4, '0')}
+              </span>
+              
+              <div className="flex-1 space-y-4 mt-4 md:mt-0">
+                {/* English */}
+                <div className="flex items-start gap-4">
+                  <div className="mt-1">
+                    <AudioButton filename={sentence.audio} />
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-slate-500 uppercase font-mono tracking-widest mb-1">Target_EN</p>
+                    <p className="text-xl font-sans text-slate-200 font-medium tracking-tight">{sentence.english}</p>
+                  </div>
                 </div>
                 
-                {revealedIds.has(sentence.id) ? (
-                  <p className="text-xl font-bold text-indigo-600 animate-in fade-in slide-in-from-top-1 duration-200">
-                    {sentence.german}
-                  </p>
-                ) : (
-                  <div className="h-7 w-48 bg-gray-100 rounded animate-pulse" />
-                )}
-                
-                <p className="text-xs text-gray-400">Focus word: <span className="font-semibold">{sentence.source_word_de}</span></p>
+                {/* German */}
+                <div className="pl-[52px]">
+                  <p className="text-[10px] text-slate-500 uppercase font-mono tracking-widest mb-1">Decrypted_DE</p>
+                  {revealedIds.has(sentence.id) ? (
+                    <div className="animate-in fade-in slide-in-from-top-1 duration-200">
+                      <p className="text-2xl font-sans text-cyan-400 tracking-tight shadow-[0_0_10px_rgba(34,211,238,0.1)]">
+                        {sentence.german}
+                      </p>
+                      <p className="text-xs font-sans text-slate-500 mt-2">
+                        Focus: <span className="text-slate-400 font-mono">{sentence.source_word_de}</span>
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="h-8 w-48 bg-slate-800/50 border border-slate-700/50 rounded flex items-center px-3 mt-1">
+                      <span className="text-[10px] text-slate-500 font-mono tracking-widest uppercase">Encrypted...</span>
+                    </div>
+                  )}
+                </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              {/* Controls */}
+              <div className="flex flex-col gap-3 min-w-[160px]">
                 <button
                   onClick={() => toggleReveal(sentence.id)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all ${
+                  className={`border transition-all duration-200 uppercase text-xs font-mono py-2 px-4 rounded-md tracking-widest active:scale-95 ${
                     revealedIds.has(sentence.id)
-                      ? 'bg-gray-100 text-gray-700 border-gray-300'
-                      : 'bg-white text-indigo-600 border-indigo-600 hover:bg-indigo-50'
+                      ? 'bg-slate-800/50 border-slate-700 text-slate-400 hover:bg-slate-800'
+                      : 'bg-transparent border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10 shadow-[0_0_10px_rgba(34,211,238,0.05)]'
                   }`}
                 >
-                  {revealedIds.has(sentence.id) ? 'Hide Translation' : 'Show Translation'}
+                  {revealedIds.has(sentence.id) ? 'Hide Data' : 'Decrypt Data'}
                 </button>
                 <button
                   onClick={() => handleAddToTest(sentence.id)}
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 shadow-sm transition-all"
+                  className="bg-transparent border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 transition-all duration-200 uppercase text-xs font-mono py-2 px-4 rounded-md tracking-widest active:scale-95 shadow-[0_0_10px_rgba(16,185,129,0.05)]"
                 >
-                  Add to Test
+                  Save to Memory
                 </button>
               </div>
             </div>

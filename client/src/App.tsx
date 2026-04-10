@@ -23,7 +23,6 @@ function App() {
     }
   };
 
-  // Only fetch initially if empty, otherwise manual
   useEffect(() => {
     if (learnSentences.length === 0) {
       loadLearnSentences();
@@ -33,10 +32,11 @@ function App() {
 
   return (
     <BrowserRouter>
-      <div className="min-h-screen bg-gray-50">
+      {/* Deep slate background, text-slate-300 for soft white readability */}
+      <div className="min-h-screen bg-slate-950 text-slate-300 font-sans selection:bg-cyan-500/30 selection:text-cyan-100">
         <Navbar />
         
-        <main className="max-w-4xl mx-auto px-4 py-8">
+        <main className="max-w-4xl mx-auto px-4 py-8 relative z-10">
           <Routes>
             <Route path="/learn" element={
               <LearnView 
@@ -52,8 +52,8 @@ function App() {
           </Routes>
         </main>
 
-        <footer className="py-12 text-center text-gray-400 text-xs">
-          &copy; 2026 Antigravity Language Learning. Built with TypeScript & SQLite.
+        <footer className="py-12 text-center text-slate-600 text-xs font-mono relative z-10">
+          SYS.STATUS: ONLINE // 2026 // <span className="text-cyan-500/50">ANTIGRAVITY_LANG_OS</span>
         </footer>
       </div>
     </BrowserRouter>
