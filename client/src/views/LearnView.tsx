@@ -1,19 +1,17 @@
 import React, { useState } from 'react';
 import type { Sentence } from '../types';
 import AudioButton from '../components/AudioButton';
+import { markAsLearning } from '../api';
 
 interface LearnViewProps {
   sentences: Sentence[];
-  addToTest: (id: number) => void;
+  setSentences: React.Dispatch<React.SetStateAction<Sentence[]>>;
+  onRefresh: () => void;
+  loading: boolean;
 }
 
-const LearnView: React.FC<LearnViewProps> = ({ sentences, addToTest }) => {
+const LearnView: React.FC<LearnViewProps> = ({ sentences, setSentences, onRefresh, loading }) => {
   const [revealedIds, setRevealedIds] = useState<Set<number>>(new Set());
-  
-  // Show only 5 new sentences at a time
-  const newSentences = sentences
-    .filter(s => !s.is_learning)
-    .slice(0, 5);
 
   const toggleReveal = (id: number) => {
     const next = new Set(revealedIds);
@@ -22,20 +20,45 @@ const LearnView: React.FC<LearnViewProps> = ({ sentences, addToTest }) => {
     setRevealedIds(next);
   };
 
+  const handleAddToTest = async (id: number) => {
+    try {
+      await markAsLearning(id);
+      // Optimistically remove from view
+      setSentences(prev => prev.filter(s => s.id !== id));
+    } catch (error) {
+      console.error('Failed to add to test', error);
+      alert('Failed to add to test deck. Please try again.');
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <div className="text-center py-4">
-        <h2 className="text-2xl font-bold text-gray-800">New Sentences</h2>
-        <p className="text-gray-500">Learn these {newSentences.length} sentences before adding them to your test deck.</p>
+      <div className="text-center py-4 flex flex-col items-center gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-800">New Sentences</h2>
+          <p className="text-gray-500">Learn these {sentences.length} sentences before adding them to your test deck.</p>
+        </div>
+        
+        <button
+          onClick={onRefresh}
+          disabled={loading}
+          className="px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-full text-sm font-medium transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+          {loading ? 'Fetching...' : 'Fetch New Batch'}
+        </button>
       </div>
 
       <div className="grid gap-4">
-        {newSentences.length === 0 ? (
+        {sentences.length === 0 ? (
           <div className="bg-gray-50 p-8 text-center rounded-xl border border-dashed border-gray-300">
-            <p className="text-gray-500 italic">All caught up! No more new sentences for now.</p>
+            <p className="text-gray-500 italic">No sentences loaded or you've learned them all.</p>
+            <button onClick={onRefresh} className="mt-4 text-indigo-600 font-medium hover:underline">
+              Fetch a new batch
+            </button>
           </div>
         ) : (
-          newSentences.map((sentence) => (
+          sentences.map((sentence) => (
             <div key={sentence.id} className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div className="flex-1 space-y-2">
                 <div className="flex items-center gap-3">
@@ -66,7 +89,7 @@ const LearnView: React.FC<LearnViewProps> = ({ sentences, addToTest }) => {
                   {revealedIds.has(sentence.id) ? 'Hide Translation' : 'Show Translation'}
                 </button>
                 <button
-                  onClick={() => addToTest(sentence.id)}
+                  onClick={() => handleAddToTest(sentence.id)}
                   className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 shadow-sm transition-all"
                 >
                   Add to Test

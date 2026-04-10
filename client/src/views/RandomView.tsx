@@ -1,26 +1,37 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import type { Sentence } from '../types';
 import AudioButton from '../components/AudioButton';
+import { fetchRandom } from '../api';
 
-interface RandomViewProps {
-  sentences: Sentence[];
-}
-
-const RandomView: React.FC<RandomViewProps> = ({ sentences }) => {
+const RandomView: React.FC = () => {
   const [currentSentence, setCurrentSentence] = useState<Sentence | null>(null);
   const [isRevealed, setIsRevealed] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const getRandomSentence = () => {
-    const randomIndex = Math.floor(Math.random() * sentences.length);
-    setCurrentSentence(sentences[randomIndex]);
-    setIsRevealed(false);
-  };
+  const loadRandomSentence = useCallback(async () => {
+    setLoading(true);
+    try {
+      const sentence = await fetchRandom();
+      setCurrentSentence(sentence);
+      setIsRevealed(false);
+    } catch (error) {
+      console.error('Failed to load random sentence:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    if (sentences.length > 0) getRandomSentence();
-  }, [sentences]);
+    loadRandomSentence();
+  }, [loadRandomSentence]);
 
-  if (!currentSentence) return null;
+  if (loading && !currentSentence) {
+    return <div className="text-center py-20 text-gray-500">Loading a random sentence...</div>;
+  }
+
+  if (!currentSentence) {
+    return <div className="text-center py-20 text-gray-500">No sentences found in the database.</div>;
+  }
 
   return (
     <div className="max-w-2xl mx-auto py-8">
@@ -44,6 +55,9 @@ const RandomView: React.FC<RandomViewProps> = ({ sentences }) => {
         <div className="min-h-[120px] flex flex-col justify-center w-full">
           {isRevealed ? (
             <div className="space-y-6">
+              {/* Auto-play the audio upon revealing */}
+              <audio src={`/audio/${currentSentence.audio}`} autoPlay className="hidden" />
+              
                <div className="flex items-center justify-center gap-4">
                   <p className="text-4xl font-black text-gray-900 leading-tight">
                     {currentSentence.german}
@@ -63,10 +77,11 @@ const RandomView: React.FC<RandomViewProps> = ({ sentences }) => {
         </div>
 
         <button
-          onClick={getRandomSentence}
-          className="mt-4 px-8 py-3 bg-gray-900 text-white rounded-full font-bold hover:bg-indigo-600 transition-all shadow-lg flex items-center gap-2"
+          onClick={loadRandomSentence}
+          disabled={loading}
+          className="mt-4 px-8 py-3 bg-gray-900 text-white rounded-full font-bold hover:bg-indigo-600 transition-all shadow-lg flex items-center gap-2 disabled:opacity-50"
         >
-          <span>Next Random</span>
+          <span>{loading ? 'Loading...' : 'Next Random'}</span>
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M5 12h14"></path>
             <path d="m12 5 7 7-7 7"></path>

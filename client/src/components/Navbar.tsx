@@ -1,16 +1,11 @@
 import React from 'react';
-import type { View } from '../types';
+import { NavLink } from 'react-router-dom';
 
-interface NavbarProps {
-  currentView: View;
-  setCurrentView: (view: View) => void;
-}
-
-const Navbar: React.FC<NavbarProps> = ({ currentView, setCurrentView }) => {
-  const links: { label: string; value: View }[] = [
-    { label: 'Learn', value: 'learn' },
-    { label: 'Test (FSRS)', value: 'test' },
-    { label: 'Random', value: 'random' },
+const Navbar: React.FC = () => {
+  const links = [
+    { label: 'Learn', path: '/learn' },
+    { label: 'Test (FSRS)', path: '/test' },
+    { label: 'Random', path: '/random' },
   ];
 
   return (
@@ -19,17 +14,19 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, setCurrentView }) => {
         <h1 className="text-xl font-bold text-gray-800">Antigravity Deutsch</h1>
         <div className="flex space-x-1">
           {links.map((link) => (
-            <button
-              key={link.value}
-              onClick={() => setCurrentView(link.value)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                currentView === link.value
-                  ? 'bg-indigo-600 text-white shadow-sm'
-                  : 'text-gray-600 hover:bg-gray-100'
-              }`}
+            <NavLink
+              key={link.path}
+              to={link.path}
+              className={({ isActive }) =>
+                `px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  isActive
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`
+              }
             >
               {link.label}
-            </button>
+            </NavLink>
           ))}
         </div>
       </div>

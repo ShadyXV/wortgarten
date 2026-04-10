@@ -65,6 +65,52 @@ app.get('/api/test/due', (req, res) => {
   }
 });
 
+// Helper function for simplified spaced repetition
+function calculateNextReview(currentData: SentenceRow, rating: 1 | 2 | 3 | 4) {
+  const now = new Date();
+  let stability = currentData.fsrs_stability || 0;
+  let difficulty = currentData.fsrs_difficulty || 5; // Unused in this simple version, kept for schema
+  let reps = (currentData.fsrs_reps || 0) + 1;
+  let lapses = currentData.fsrs_lapses || 0;
+  let nextDue = new Date(now);
+
+  if (stability === 0) {
+    // New card initialization
+    if (rating === 1) stability = 0.1;
+    else if (rating === 2) stability = 0.5;
+    else if (rating === 3) stability = 1;
+    else if (rating === 4) stability = 4;
+  } else {
+    // Existing card updates
+    if (rating === 1) {
+      lapses += 1;
+      stability = Math.max(0.1, stability * 0.1);
+    } else if (rating === 2) {
+      stability = stability * 1.2;
+    } else if (rating === 3) {
+      stability = Math.max(1, stability * 2.5);
+    } else if (rating === 4) {
+      stability = Math.max(1, stability * 3.5);
+    }
+  }
+
+  // Calculate next due date
+  if (rating === 1) {
+    nextDue.setMinutes(now.getMinutes() + 1);
+  } else {
+    // Convert stability (days) to minutes for precision
+    nextDue.setMinutes(now.getMinutes() + Math.round(stability * 24 * 60));
+  }
+
+  return {
+    fsrs_stability: stability,
+    fsrs_difficulty: difficulty,
+    fsrs_reps: reps,
+    fsrs_lapses: lapses,
+    fsrs_due: nextDue.toISOString(),
+  };
+}
+
 // GET /api/random
 // Fetches a single random sentence from the entire pool
 app.get('/api/random', (req, res) => {
@@ -80,6 +126,63 @@ app.get('/api/random', (req, res) => {
     res.json(sentence);
   } catch (error) {
     console.error('Error fetching random sentence:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// POST /api/test/review
+// Submit a spaced repetition rating for a sentence
+app.post('/api/test/review', (req, res) => {
+  try {
+    const { id, rating } = req.body;
+
+    if (!id || typeof id !== 'number') {
+      res.status(400).json({ error: 'Invalid or missing ID' });
+      return;
+    }
+
+    if (![1, 2, 3, 4].includes(rating)) {
+      res.status(400).json({ error: 'Invalid rating. Must be 1, 2, 3, or 4.' });
+      return;
+    }
+
+    // Fetch current sentence data
+    const getStmt = db.prepare('SELECT * FROM sentences WHERE id = ?');
+    const currentData = getStmt.get(id) as SentenceRow | undefined;
+
+    if (!currentData) {
+      res.status(404).json({ error: 'Sentence not found' });
+      return;
+    }
+
+    // Calculate new metrics
+    const newMetrics = calculateNextReview(currentData, rating as 1 | 2 | 3 | 4);
+
+    // Update the database
+    const updateStmt = db.prepare(`
+      UPDATE sentences 
+      SET 
+        fsrs_due = ?, 
+        fsrs_stability = ?, 
+        fsrs_difficulty = ?, 
+        fsrs_reps = ?, 
+        fsrs_lapses = ?, 
+        fsrs_last_review = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `);
+
+    updateStmt.run(
+      newMetrics.fsrs_due,
+      newMetrics.fsrs_stability,
+      newMetrics.fsrs_difficulty,
+      newMetrics.fsrs_reps,
+      newMetrics.fsrs_lapses,
+      id
+    );
+
+    res.json({ success: true, metrics: newMetrics });
+  } catch (error) {
+    console.error('Error updating review:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });

@@ -1,51 +1,62 @@
-import { useState } from 'react';
-import type { Sentence, View } from './types';
-import { mockSentences as initialData } from './mockData';
+import { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import type { Sentence } from './types';
+import { fetchLearn } from './api';
 import Navbar from './components/Navbar';
 import LearnView from './views/LearnView';
 import TestView from './views/TestView';
 import RandomView from './views/RandomView';
 
 function App() {
-  const [sentences, setSentences] = useState<Sentence[]>(initialData);
-  const [currentView, setCurrentView] = useState<View>('learn');
+  const [learnSentences, setLearnSentences] = useState<Sentence[]>([]);
+  const [loadingLearn, setLoadingLearn] = useState(false);
 
-  const addToTest = (id: number) => {
-    setSentences(prev => prev.map(s => 
-      s.id === id ? { ...s, is_learning: true } : s
-    ));
-  };
-
-  const handleGrade = (id: number, grade: string) => {
-    console.log(`Graded sentence ${id} with ${grade}`);
-    // In a real app, this would update FSRS stability/difficulty
-  };
-
-  const renderView = () => {
-    switch (currentView) {
-      case 'learn':
-        return <LearnView sentences={sentences} addToTest={addToTest} />;
-      case 'test':
-        return <TestView sentences={sentences} onGrade={handleGrade} />;
-      case 'random':
-        return <RandomView sentences={sentences} />;
-      default:
-        return <LearnView sentences={sentences} addToTest={addToTest} />;
+  const loadLearnSentences = async () => {
+    setLoadingLearn(true);
+    try {
+      const data = await fetchLearn();
+      setLearnSentences(data);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoadingLearn(false);
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar currentView={currentView} setCurrentView={setCurrentView} />
-      
-      <main className="max-w-4xl mx-auto px-4 py-8">
-        {renderView()}
-      </main>
+  // Only fetch initially if empty, otherwise manual
+  useEffect(() => {
+    if (learnSentences.length === 0) {
+      loadLearnSentences();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-      <footer className="py-12 text-center text-gray-400 text-xs">
-        &copy; 2026 Antigravity Language Learning. Built with TypeScript & SQLite.
-      </footer>
-    </div>
+  return (
+    <BrowserRouter>
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        
+        <main className="max-w-4xl mx-auto px-4 py-8">
+          <Routes>
+            <Route path="/learn" element={
+              <LearnView 
+                sentences={learnSentences} 
+                setSentences={setLearnSentences}
+                onRefresh={loadLearnSentences}
+                loading={loadingLearn}
+              />
+            } />
+            <Route path="/test" element={<TestView />} />
+            <Route path="/random" element={<RandomView />} />
+            <Route path="*" element={<Navigate to="/learn" replace />} />
+          </Routes>
+        </main>
+
+        <footer className="py-12 text-center text-gray-400 text-xs">
+          &copy; 2026 Antigravity Language Learning. Built with TypeScript & SQLite.
+        </footer>
+      </div>
+    </BrowserRouter>
   );
 }
 

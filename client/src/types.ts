@@ -4,14 +4,19 @@ export interface Sentence {
   english: string;
   audio: string;
   source_word_de: string;
-  is_learning: boolean;
-  // FSRS Fields
-  stability: number;
-  difficulty: number;
-  elapsed_days: number;
-  scheduled_days: number;
-  last_review: string;
-  state: number;
+  source_word_en?: string;
+  grammar_note?: string;
+  is_learning: number; // 0 or 1
+  fsrs_state: number;
+  fsrs_due: string; // ISO DATETIME
+  fsrs_stability: number;
+  fsrs_difficulty: number;
+  fsrs_elapsed_days: number;
+  fsrs_scheduled_days: number;
+  fsrs_reps: number;
+  fsrs_lapses: number;
+  fsrs_last_review: string | null; // ISO DATETIME
+  created_at: string;
 }
 
 export type View = 'learn' | 'test' | 'random';
