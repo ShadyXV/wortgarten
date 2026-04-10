@@ -274,6 +274,7 @@ app.post('/api/test/review', (req, res) => {
     const updateSentenceStmt = db.prepare(`
       UPDATE sentences 
       SET 
+        is_learning = 1,
         fsrs_due = ?, 
         fsrs_stability = ?, 
         fsrs_difficulty = ?, 
