@@ -6,7 +6,7 @@ const Navbar: React.FC = () => {
   const links = [
     { label: 'Learn', path: '/learn', icon: <Terminal className="w-4 h-4" /> },
     { label: 'Review', path: '/test', icon: <Cpu className="w-4 h-4" /> },
-    { label: 'Sandbox', path: '/random', icon: <Shuffle className="w-4 h-4" /> },
+    { label: 'Practice', path: '/random', icon: <Shuffle className="w-4 h-4" /> },
   ];
 
   return (
@@ -16,7 +16,7 @@ const Navbar: React.FC = () => {
         <div className="flex items-center gap-3">
           <Terminal className="w-6 h-6 text-cyan-400" />
           <h1 className="text-xl font-sans font-semibold text-slate-200 tracking-wide">
-            Antigravity<span className="text-cyan-500 font-mono text-sm">_OS</span>
+            Antigravity
           </h1>
         </div>
         
@@ -26,7 +26,7 @@ const Navbar: React.FC = () => {
               key={link.path}
               to={link.path}
               className={({ isActive }) =>
-                `flex items-center gap-2 px-4 py-2 rounded-md text-sm font-mono transition-all duration-200 border ${
+                `flex items-center gap-2 px-4 py-2 rounded-md text-sm font-sans transition-all duration-200 border ${
                   isActive
                     ? 'border-cyan-500/30 text-cyan-400 bg-cyan-500/10 shadow-[0_0_10px_rgba(34,211,238,0.05)]'
                     : 'border-transparent text-slate-500 hover:text-slate-300 hover:bg-slate-800/50'

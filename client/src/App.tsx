@@ -52,8 +52,8 @@ function App() {
           </Routes>
         </main>
 
-        <footer className="py-12 text-center text-slate-600 text-xs font-mono relative z-10">
-          SYS.STATUS: ONLINE // 2026 // <span className="text-cyan-500/50">ANTIGRAVITY_LANG_OS</span>
+        <footer className="py-12 text-center text-slate-600 text-xs font-sans relative z-10">
+          &copy; 2026 Antigravity German Learning
         </footer>
       </div>
     </BrowserRouter>
