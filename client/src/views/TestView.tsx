@@ -63,7 +63,17 @@ const TestView: React.FC = () => {
         if ((numericRating === 1 || numericRating === 2) && isFirstTry) {
           const insertIndex = Math.min(numericRating === 1 ? 3 : 8, remaining.length);
           const nextQueue = [...remaining];
-          nextQueue.splice(insertIndex, 0, { ...currentSentence, _isRetried: true });
+          
+          // Optimistically update difficulty so HUD accurately reflects new state
+          let newDiff = currentSentence.fsrs_difficulty || 5.0;
+          if (numericRating === 1) newDiff = Math.min(10, newDiff + 2);
+          if (numericRating === 2) newDiff = Math.min(10, newDiff + 1);
+
+          nextQueue.splice(insertIndex, 0, { 
+            ...currentSentence, 
+            fsrs_difficulty: newDiff,
+            _isRetried: true 
+          });
           return nextQueue;
         }
         
@@ -228,8 +238,10 @@ const TestView: React.FC = () => {
     );
   }
 
-  const hardQueueCount = testSentences.filter(s => s.fsrs_lapses > 0 || (s.fsrs_stability && s.fsrs_stability < 2)).length;
-  const easyQueueCount = testSentences.filter(s => s.fsrs_lapses === 0 && s.fsrs_stability && s.fsrs_stability > 10).length;
+  const againCount = testSentences.filter(s => (s.fsrs_difficulty || 5.0) >= 8).length;
+  const hardCount = testSentences.filter(s => (s.fsrs_difficulty || 5.0) >= 6 && (s.fsrs_difficulty || 5.0) < 8).length;
+  const goodCount = testSentences.filter(s => (s.fsrs_difficulty || 5.0) > 3 && (s.fsrs_difficulty || 5.0) < 6).length;
+  const easyCount = testSentences.filter(s => (s.fsrs_difficulty || 5.0) <= 3).length;
 
   return (
     <div className="max-w-2xl mx-auto py-8 transition-all duration-200">
@@ -243,19 +255,25 @@ const TestView: React.FC = () => {
       <div className="bg-slate-900/80 backdrop-blur-sm border border-slate-800 rounded-lg p-8 relative overflow-hidden transition-all duration-200">
         
         {/* HUD: Status Bar */}
-        <div className="flex justify-between items-center mb-8 border-b border-slate-800/80 pb-4">
+        <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-8 border-b border-slate-800/80 pb-4">
           <div className="text-xs font-sans text-slate-400">
             Queue: <span className="font-mono text-slate-300 ml-1">{testSentences.length}</span>
           </div>
           
           <div className="flex items-center gap-3">
-            <span className="text-[10px] font-sans text-slate-500 uppercase tracking-widest">Complexity:</span>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] uppercase tracking-widest font-sans text-slate-400 bg-slate-800/30 border border-slate-700/50 px-2 py-0.5 rounded-sm">
-                Hard: {hardQueueCount}
+            <span className="text-[10px] font-sans text-slate-500 uppercase tracking-widest hidden md:inline">Complexity:</span>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[10px] uppercase tracking-widest font-sans text-slate-400 bg-slate-800/30 border border-rose-500/20 px-2 py-0.5 rounded-sm">
+                Again: {againCount}
               </span>
-              <span className="text-[10px] uppercase tracking-widest font-sans text-slate-400 bg-slate-800/30 border border-slate-700/50 px-2 py-0.5 rounded-sm">
-                Easy: {easyQueueCount}
+              <span className="text-[10px] uppercase tracking-widest font-sans text-slate-400 bg-slate-800/30 border border-orange-500/20 px-2 py-0.5 rounded-sm">
+                Hard: {hardCount}
+              </span>
+              <span className="text-[10px] uppercase tracking-widest font-sans text-slate-400 bg-slate-800/30 border border-cyan-500/20 px-2 py-0.5 rounded-sm">
+                Good: {goodCount}
+              </span>
+              <span className="text-[10px] uppercase tracking-widest font-sans text-slate-400 bg-slate-800/30 border border-emerald-500/20 px-2 py-0.5 rounded-sm">
+                Easy: {easyCount}
               </span>
             </div>
           </div>

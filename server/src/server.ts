@@ -145,21 +145,25 @@ app.get('/api/test/due', (req, res) => {
   try {
     const mode = req.query.mode as string;
     let difficultyFilter = '';
+    let dueFilter = "AND (fsrs_due <= datetime('now', 'localtime') OR fsrs_due IS NULL OR fsrs_due <= CURRENT_TIMESTAMP)";
     
     if (mode === 'hard') {
       difficultyFilter = ' AND IFNULL(fsrs_difficulty, 5.0) > 5.0';
+      dueFilter = ''; // Ignore due date for targeted cramming
     } else if (mode === 'good') {
       difficultyFilter = ' AND IFNULL(fsrs_difficulty, 5.0) > 3.0 AND IFNULL(fsrs_difficulty, 5.0) <= 5.0';
+      dueFilter = '';
     } else if (mode === 'easy') {
       difficultyFilter = ' AND IFNULL(fsrs_difficulty, 5.0) <= 3.0';
+      dueFilter = '';
     }
 
     const query = `
       SELECT * FROM sentences 
       WHERE is_learning = 1 
-        AND (fsrs_due <= datetime('now', 'localtime') OR fsrs_due IS NULL OR fsrs_due <= CURRENT_TIMESTAMP)
+        ${dueFilter}
         ${difficultyFilter}
-      ORDER BY fsrs_due ASC 
+      ORDER BY IFNULL(fsrs_due, CURRENT_TIMESTAMP) ASC 
       LIMIT 20
     `;
     const stmt = db.prepare(query);
