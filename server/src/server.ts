@@ -239,11 +239,11 @@ function calculateNextReview(currentData: SentenceRow, rating: 1 | 2 | 3 | 4) {
   let lapses = currentData.fsrs_lapses || 0;
   let nextDue = new Date(now);
 
-  // Dynamically update difficulty based on rating
-  if (rating === 1) difficulty = Math.min(10, difficulty + 2);
-  else if (rating === 2) difficulty = Math.min(10, difficulty + 1);
-  else if (rating === 3) difficulty = Math.max(1, difficulty - 1);
-  else if (rating === 4) difficulty = Math.max(1, difficulty - 2);
+  // Dynamically update difficulty based on rating for immediate label shifting
+  if (rating === 1) difficulty = Math.max(8.0, Math.min(10, difficulty + 2));
+  else if (rating === 2) difficulty = Math.max(6.0, Math.min(7.9, difficulty + 1));
+  else if (rating === 3) difficulty = Math.max(3.1, Math.min(5.9, difficulty - 1));
+  else if (rating === 4) difficulty = Math.min(3.0, Math.max(1.0, difficulty - 2));
 
   if (stability === 0) {
     // New card initialization

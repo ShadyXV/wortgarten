@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import type { Sentence } from '../types';
 import { fetchDueTest, submitReview, fetchTestCounts } from '../api';
 import { Cpu, Volume2, Target, Settings, Play, Activity } from 'lucide-react';
+import EditSentenceModal from '../components/EditSentenceModal';
 
 const TestView: React.FC = () => {
   const navigate = useNavigate();
@@ -73,8 +74,9 @@ const TestView: React.FC = () => {
           
           // Optimistically update difficulty so HUD accurately reflects new state
           let newDiff = currentSentence.fsrs_difficulty || 5.0;
-          if (numericRating === 1) newDiff = Math.min(10, newDiff + 2);
-          if (numericRating === 2) newDiff = Math.min(10, newDiff + 1);
+          if (numericRating === 1) newDiff = Math.max(8.0, Math.min(10, newDiff + 2));
+          if (numericRating === 2) newDiff = Math.max(6.0, Math.min(7.9, newDiff + 1));
+          // Note: If rating is 3 or 4, it's removed from queue anyway, so no need to update difficulty on nextQueue
 
           nextQueue.splice(insertIndex, 0, { 
             ...currentSentence, 
@@ -99,6 +101,28 @@ const TestView: React.FC = () => {
     } catch (error) {
       console.error('Queue update failed:', error);
     }
+  };
+
+  const handleUpdateSentence = (
+    id: number, 
+    newEnglish: string, 
+    newGerman: string, 
+    newDifficulty?: number,
+    newIsLearning?: number
+  ) => {
+    setTestSentences(prev =>
+      prev.map(s =>
+        s.id === id 
+          ? { 
+              ...s, 
+              english: newEnglish, 
+              german: newGerman, 
+              fsrs_difficulty: newDifficulty ?? s.fsrs_difficulty,
+              is_learning: newIsLearning ?? s.is_learning
+            } 
+          : s
+      )
+    );
   };
 
   const playAudio = (filename: string, e?: React.MouseEvent) => {
@@ -302,8 +326,16 @@ const TestView: React.FC = () => {
         
         {/* HUD: Status Bar */}
         <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-8 border-b border-slate-800/80 pb-4">
-          <div className="text-xs font-sans text-slate-400">
-            Queue: <span className="font-mono text-slate-300 ml-1">{testSentences.length}</span>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-sans text-slate-400">Queue: <span className="font-mono text-slate-300">{testSentences.length}</span></span>
+            <EditSentenceModal
+              id={currentSentence.id}
+              initialEnglish={currentSentence.english}
+              initialGerman={currentSentence.german}
+              initialDifficulty={currentSentence.fsrs_difficulty || 5.0}
+              initialIsLearning={currentSentence.is_learning}
+              onUpdate={handleUpdateSentence}
+            />
           </div>
           
           <div className="flex items-center gap-3">
