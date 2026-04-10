@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Sentence } from '../types';
 import { fetchDueTest, submitReview, fetchTestCounts } from '../api';
-import { Cpu, Volume2, Target, Settings, Play, Activity } from 'lucide-react';
+import { Cpu, Volume2, Settings, Play, Activity } from 'lucide-react';
 import EditSentenceModal from '../components/EditSentenceModal';
 
 const TestView: React.FC = () => {
@@ -60,9 +60,9 @@ const TestView: React.FC = () => {
     const isFirstTry = !(currentSentence as any)._isRetried;
 
     try {
-      submitReview(currentSentence.id, numericRating, timeTakenMs).catch(error => {
-        console.error('Failed to submit review sync:', error);
-      });
+      // Await backend to get true ts-fsrs mathematical calculations
+      const response = await submitReview(currentSentence.id, numericRating, timeTakenMs);
+      const newMetrics = response.metrics;
 
       setTestSentences(prev => {
         const remaining = prev.slice(1);
@@ -72,15 +72,10 @@ const TestView: React.FC = () => {
           const insertIndex = Math.min(numericRating === 1 ? 3 : 8, remaining.length);
           const nextQueue = [...remaining];
           
-          // Optimistically update difficulty so HUD accurately reflects new state
-          let newDiff = currentSentence.fsrs_difficulty || 5.0;
-          if (numericRating === 1) newDiff = Math.max(8.0, Math.min(10, newDiff + 2));
-          if (numericRating === 2) newDiff = Math.max(6.0, Math.min(7.9, newDiff + 1));
-          // Note: If rating is 3 or 4, it's removed from queue anyway, so no need to update difficulty on nextQueue
-
+          // Use the exact mathematical state returned by true FSRS algorithm
           nextQueue.splice(insertIndex, 0, { 
             ...currentSentence, 
-            fsrs_difficulty: newDiff,
+            ...newMetrics,
             _isRetried: true 
           });
           return nextQueue;

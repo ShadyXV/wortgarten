@@ -32,7 +32,7 @@ export const fetchRandom = async (): Promise<Sentence> => {
   return res.json();
 };
 
-export const submitReview = async (id: number, rating: 1 | 2 | 3 | 4, time_taken_ms?: number): Promise<{ success: boolean }> => {
+export const submitReview = async (id: number, rating: 1 | 2 | 3 | 4, time_taken_ms?: number): Promise<{ success: boolean; metrics: any }> => {
   const res = await fetch(`${API_BASE}/test/review`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

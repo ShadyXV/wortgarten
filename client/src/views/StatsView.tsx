@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Activity, BarChart2, AlertCircle, CheckCircle, Clock } from 'lucide-react';
+import { Activity, BarChart2, AlertCircle, CheckCircle } from 'lucide-react';
 import { 
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell
 } from 'recharts';
@@ -172,7 +172,7 @@ const StatsView: React.FC = () => {
                     labelStyle={{ color: '#94a3b8', marginBottom: '4px' }}
                   />
                   <Bar dataKey="count" radius={[4, 4, 0, 0]}>
-                    {forecast.map((entry, index) => (
+                    {forecast.map((_, index) => (
                       <Cell key={`cell-${index}`} fill={index === 0 ? '#38bdf8' : '#0ea5e9'} fillOpacity={0.8} />
                     ))}
                   </Bar>
