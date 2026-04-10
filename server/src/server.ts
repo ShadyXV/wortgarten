@@ -82,11 +82,11 @@ app.get('/api/sentences', (req, res) => {
       if (difficulty === 'easy') {
         diffCond = 'is_learning = 1 AND IFNULL(fsrs_difficulty, 5.0) <= 3.0';
       } else if (difficulty === 'good') {
-        diffCond = 'is_learning = 1 AND IFNULL(fsrs_difficulty, 5.0) > 3.0 AND IFNULL(fsrs_difficulty, 5.0) < 6.0';
+        diffCond = 'is_learning = 1 AND IFNULL(fsrs_difficulty, 5.0) > 3.0 AND IFNULL(fsrs_difficulty, 5.0) <= 5.0';
       } else if (difficulty === 'hard') {
-        diffCond = 'is_learning = 1 AND IFNULL(fsrs_difficulty, 5.0) >= 6.0 AND IFNULL(fsrs_difficulty, 5.0) < 8.0';
+        diffCond = 'is_learning = 1 AND IFNULL(fsrs_difficulty, 5.0) > 5.0 AND IFNULL(fsrs_difficulty, 5.0) <= 7.0';
       } else if (difficulty === 'again') {
-        diffCond = 'is_learning = 1 AND IFNULL(fsrs_difficulty, 5.0) >= 8.0';
+        diffCond = 'is_learning = 1 AND IFNULL(fsrs_difficulty, 5.0) > 7.0';
       }
 
       if (diffCond) {
@@ -171,9 +171,9 @@ app.get('/api/test/counts', (req, res) => {
       SELECT
         SUM(CASE WHEN (fsrs_due <= datetime('now', 'localtime') OR fsrs_due IS NULL OR fsrs_due <= CURRENT_TIMESTAMP) THEN 1 ELSE 0 END) as "all_count",
         SUM(CASE WHEN IFNULL(fsrs_difficulty, 5.0) <= 3.0 THEN 1 ELSE 0 END) as "easy",
-        SUM(CASE WHEN IFNULL(fsrs_difficulty, 5.0) > 3.0 AND IFNULL(fsrs_difficulty, 5.0) < 6.0 THEN 1 ELSE 0 END) as "good",
-        SUM(CASE WHEN IFNULL(fsrs_difficulty, 5.0) >= 6.0 AND IFNULL(fsrs_difficulty, 5.0) < 8.0 THEN 1 ELSE 0 END) as "hard",
-        SUM(CASE WHEN IFNULL(fsrs_difficulty, 5.0) >= 8.0 THEN 1 ELSE 0 END) as "again"
+        SUM(CASE WHEN IFNULL(fsrs_difficulty, 5.0) > 3.0 AND IFNULL(fsrs_difficulty, 5.0) <= 5.0 THEN 1 ELSE 0 END) as "good",
+        SUM(CASE WHEN IFNULL(fsrs_difficulty, 5.0) > 5.0 AND IFNULL(fsrs_difficulty, 5.0) <= 7.0 THEN 1 ELSE 0 END) as "hard",
+        SUM(CASE WHEN IFNULL(fsrs_difficulty, 5.0) > 7.0 THEN 1 ELSE 0 END) as "again"
       FROM sentences
       WHERE is_learning = 1
     `);
@@ -201,13 +201,13 @@ app.get('/api/test/due', (req, res) => {
     let dueFilter = "AND (fsrs_due <= datetime('now', 'localtime') OR fsrs_due IS NULL OR fsrs_due <= CURRENT_TIMESTAMP)";
     
     if (mode === 'again') {
-      difficultyFilter = ' AND IFNULL(fsrs_difficulty, 5.0) >= 8.0';
+      difficultyFilter = ' AND IFNULL(fsrs_difficulty, 5.0) > 7.0';
       dueFilter = '';
     } else if (mode === 'hard') {
-      difficultyFilter = ' AND IFNULL(fsrs_difficulty, 5.0) >= 6.0 AND IFNULL(fsrs_difficulty, 5.0) < 8.0';
+      difficultyFilter = ' AND IFNULL(fsrs_difficulty, 5.0) > 5.0 AND IFNULL(fsrs_difficulty, 5.0) <= 7.0';
       dueFilter = ''; // Ignore due date for targeted cramming
     } else if (mode === 'good') {
-      difficultyFilter = ' AND IFNULL(fsrs_difficulty, 5.0) > 3.0 AND IFNULL(fsrs_difficulty, 5.0) < 6.0';
+      difficultyFilter = ' AND IFNULL(fsrs_difficulty, 5.0) > 3.0 AND IFNULL(fsrs_difficulty, 5.0) <= 5.0';
       dueFilter = '';
     } else if (mode === 'easy') {
       difficultyFilter = ' AND IFNULL(fsrs_difficulty, 5.0) <= 3.0';

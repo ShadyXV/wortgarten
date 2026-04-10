@@ -78,9 +78,9 @@ const ManageView: React.FC = () => {
   };
 
   const getDifficultyBadge = (diff: number) => {
-    if (diff <= 3) return <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">EASY</span>;
-    if (diff <= 5) return <span className="text-[10px] text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/20">GOOD</span>;
-    if (diff <= 7) return <span className="text-[10px] text-orange-400 bg-orange-500/10 px-2 py-0.5 rounded border border-orange-500/20">HARD</span>;
+    if (diff <= 3.0) return <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">EASY</span>;
+    if (diff <= 5.0) return <span className="text-[10px] text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/20">GOOD</span>;
+    if (diff <= 7.0) return <span className="text-[10px] text-orange-400 bg-orange-500/10 px-2 py-0.5 rounded border border-orange-500/20">HARD</span>;
     return <span className="text-[10px] text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20">AGAIN</span>;
   };
 

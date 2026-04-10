@@ -73,9 +73,9 @@ const EditSentenceModal: React.FC<EditSentenceModalProps> = ({
   };
 
   const getDifficultyLabel = (diff: number) => {
-    if (diff <= 3) return 'Easy';
-    if (diff <= 5) return 'Good';
-    if (diff <= 7) return 'Hard';
+    if (diff <= 3.0) return 'Easy';
+    if (diff <= 5.0) return 'Good';
+    if (diff <= 7.0) return 'Hard';
     return 'Again (Very Hard)';
   };
 
@@ -148,12 +148,12 @@ const EditSentenceModal: React.FC<EditSentenceModalProps> = ({
                   value={difficulty}
                   onChange={(e) => setDifficulty(parseFloat(e.target.value))}
                   disabled={isLearning === 0}
-                  className="flex h-10 w-full rounded-md border border-slate-800 bg-slate-900/50 px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-cyan-500 disabled:opacity-50"
+                  className="flex h-10 w-full rounded-md border border-slate-800 bg-slate-950/50 px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-cyan-500 disabled:opacity-50"
                 >
-                  <option value={2}>Easy (&le; 3)</option>
-                  <option value={5}>Good (4 - 5)</option>
-                  <option value={7}>Hard (6 - 7)</option>
-                  <option value={9}>Again (8+)</option>
+                  <option value={2.0}>Easy (&le; 3.0)</option>
+                  <option value={4.0}>Good (3.1 - 5.0)</option>
+                  <option value={6.5}>Hard (5.1 - 7.0)</option>
+                  <option value={9.0}>Again (&gt; 7.0)</option>
                 </select>
                 {isLearning === 1 && (
                   <p className="text-[10px] text-cyan-500/70 font-mono">Current: {getDifficultyLabel(difficulty)}</p>

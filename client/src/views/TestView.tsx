@@ -165,7 +165,7 @@ const TestView: React.FC = () => {
             >
               <div className="flex flex-col items-start">
                 <span className="font-sans font-medium">Again Focus</span>
-                <span className="text-[10px] font-mono uppercase opacity-70">Difficulty &ge; 8.0</span>
+                <span className="text-[10px] font-mono uppercase opacity-70">Difficulty &gt; 7.0</span>
               </div>
               <span className="text-lg font-mono">{counts.again}</span>
             </button>
@@ -180,7 +180,7 @@ const TestView: React.FC = () => {
             >
               <div className="flex flex-col items-start">
                 <span className="font-sans font-medium">Hard Focus</span>
-                <span className="text-[10px] font-mono uppercase opacity-70">Difficulty 6.0 - 7.9</span>
+                <span className="text-[10px] font-mono uppercase opacity-70">Difficulty 5.1 - 7.0</span>
               </div>
               <span className="text-lg font-mono">{counts.hard}</span>
             </button>
@@ -195,7 +195,7 @@ const TestView: React.FC = () => {
             >
               <div className="flex flex-col items-start">
                 <span className="font-sans font-medium">Good Review</span>
-                <span className="text-[10px] font-mono uppercase opacity-70">Difficulty 3.1 - 5.9</span>
+                <span className="text-[10px] font-mono uppercase opacity-70">Difficulty 3.1 - 5.0</span>
               </div>
               <span className="text-lg font-mono">{counts.good}</span>
             </button>
@@ -303,10 +303,10 @@ const TestView: React.FC = () => {
     );
   }
 
-  const againCount = testSentences.filter(s => (s.fsrs_difficulty || 5.0) >= 8).length;
-  const hardCount = testSentences.filter(s => (s.fsrs_difficulty || 5.0) >= 6 && (s.fsrs_difficulty || 5.0) < 8).length;
-  const goodCount = testSentences.filter(s => (s.fsrs_difficulty || 5.0) > 3 && (s.fsrs_difficulty || 5.0) < 6).length;
-  const easyCount = testSentences.filter(s => (s.fsrs_difficulty || 5.0) <= 3).length;
+  const againCount = testSentences.filter(s => (s.fsrs_difficulty || 5.0) > 7.0).length;
+  const hardCount = testSentences.filter(s => (s.fsrs_difficulty || 5.0) > 5.0 && (s.fsrs_difficulty || 5.0) <= 7.0).length;
+  const goodCount = testSentences.filter(s => (s.fsrs_difficulty || 5.0) > 3.0 && (s.fsrs_difficulty || 5.0) <= 5.0).length;
+  const easyCount = testSentences.filter(s => (s.fsrs_difficulty || 5.0) <= 3.0).length;
 
   return (
     <div className="max-w-2xl mx-auto py-8 transition-all duration-200">
