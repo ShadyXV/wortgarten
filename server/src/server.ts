@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import db from './db';
 import type { SentenceRow } from './types';
+import { fsrs, createEmptyCard, Rating, State, Card } from 'ts-fsrs';
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -230,55 +231,47 @@ app.get('/api/test/due', (req, res) => {
   }
 });
 
-// Helper function for simplified spaced repetition
-function calculateNextReview(currentData: SentenceRow, rating: 1 | 2 | 3 | 4) {
+// Helper function integrating true ts-fsrs mathematical engine
+function calculateNextReviewWithFSRS(currentData: SentenceRow, ratingVal: 1 | 2 | 3 | 4) {
   const now = new Date();
-  let stability = currentData.fsrs_stability || 0;
-  let difficulty = currentData.fsrs_difficulty || 5.0; 
-  let reps = (currentData.fsrs_reps || 0) + 1;
-  let lapses = currentData.fsrs_lapses || 0;
-  let nextDue = new Date(now);
+  let card: Card;
 
-  // Dynamically update difficulty based on rating for immediate label shifting
-  if (rating === 1) difficulty = Math.max(8.0, Math.min(10, difficulty + 2));
-  else if (rating === 2) difficulty = Math.max(6.0, Math.min(7.9, difficulty + 1));
-  else if (rating === 3) difficulty = Math.max(3.1, Math.min(5.9, difficulty - 1));
-  else if (rating === 4) difficulty = Math.min(3.0, Math.max(1.0, difficulty - 2));
-
-  if (stability === 0) {
-    // New card initialization
-    if (rating === 1) stability = 0.1;
-    else if (rating === 2) stability = 0.5;
-    else if (rating === 3) stability = 1;
-    else if (rating === 4) stability = 4;
+  if (currentData.fsrs_state === 0 || !currentData.fsrs_due) {
+    card = createEmptyCard(now);
   } else {
-    // Existing card updates
-    if (rating === 1) {
-      lapses += 1;
-      stability = Math.max(0.1, stability * 0.1);
-    } else if (rating === 2) {
-      stability = stability * 1.2;
-    } else if (rating === 3) {
-      stability = Math.max(1, stability * 2.5);
-    } else if (rating === 4) {
-      stability = Math.max(1, stability * 3.5);
-    }
+    // SQLite UTC strings -> JS Date
+    const dueStr = currentData.fsrs_due.includes('Z') ? currentData.fsrs_due : currentData.fsrs_due + 'Z';
+    const lastRevStr = currentData.fsrs_last_review ? (currentData.fsrs_last_review.includes('Z') ? currentData.fsrs_last_review : currentData.fsrs_last_review + 'Z') : undefined;
+
+    card = {
+      due: new Date(dueStr),
+      stability: currentData.fsrs_stability || 0,
+      difficulty: currentData.fsrs_difficulty || 5,
+      elapsed_days: currentData.fsrs_elapsed_days || 0,
+      scheduled_days: currentData.fsrs_scheduled_days || 0,
+      reps: currentData.fsrs_reps || 0,
+      lapses: currentData.fsrs_lapses || 0,
+      state: currentData.fsrs_state as State,
+      last_review: lastRevStr ? new Date(lastRevStr) : undefined,
+      learning_steps: 0 // Default for missing field in older DB records
+    };
   }
 
-  // Calculate next due date
-  if (rating === 1) {
-    nextDue.setMinutes(now.getMinutes() + 1);
-  } else {
-    // Convert stability (days) to minutes for precision
-    nextDue.setMinutes(now.getMinutes() + Math.round(stability * 24 * 60));
-  }
+  const f = fsrs({});
+  
+  const ratingEnum = ratingVal as Rating.Again | Rating.Hard | Rating.Good | Rating.Easy;
+  const nextRecord = f.repeat(card, now)[ratingEnum];
+  const nextCard = nextRecord.card;
 
   return {
-    fsrs_stability: stability,
-    fsrs_difficulty: difficulty,
-    fsrs_reps: reps,
-    fsrs_lapses: lapses,
-    fsrs_due: nextDue.toISOString().replace('T', ' ').split('.')[0], // SQLite safe DATETIME format
+    fsrs_state: nextCard.state,
+    fsrs_due: nextCard.due.toISOString().replace('T', ' ').split('.')[0], // Safe SQLite DATETIME
+    fsrs_stability: nextCard.stability,
+    fsrs_difficulty: nextCard.difficulty,
+    fsrs_elapsed_days: nextCard.elapsed_days,
+    fsrs_scheduled_days: nextCard.scheduled_days,
+    fsrs_reps: nextCard.reps,
+    fsrs_lapses: nextCard.lapses
   };
 }
 
@@ -327,16 +320,19 @@ app.post('/api/test/review', (req, res) => {
     }
 
     // Calculate new metrics
-    const newMetrics = calculateNextReview(currentData, rating as 1 | 2 | 3 | 4);
+    const newMetrics = calculateNextReviewWithFSRS(currentData, rating as 1 | 2 | 3 | 4);
 
     // Update the database and insert a review log inside a transaction
     const updateSentenceStmt = db.prepare(`
       UPDATE sentences 
       SET 
         is_learning = 1,
+        fsrs_state = ?,
         fsrs_due = ?, 
         fsrs_stability = ?, 
         fsrs_difficulty = ?, 
+        fsrs_elapsed_days = ?,
+        fsrs_scheduled_days = ?,
         fsrs_reps = ?, 
         fsrs_lapses = ?, 
         fsrs_last_review = CURRENT_TIMESTAMP
@@ -350,9 +346,12 @@ app.post('/api/test/review', (req, res) => {
 
     const reviewTransaction = db.transaction((metrics, sentenceId, reviewRating, timeTaken) => {
       updateSentenceStmt.run(
+        metrics.fsrs_state,
         metrics.fsrs_due,
         metrics.fsrs_stability,
         metrics.fsrs_difficulty,
+        metrics.fsrs_elapsed_days,
+        metrics.fsrs_scheduled_days,
         metrics.fsrs_reps,
         metrics.fsrs_lapses,
         sentenceId
