@@ -134,7 +134,7 @@ app.get('/api/random', (req, res) => {
 // Submit a spaced repetition rating for a sentence
 app.post('/api/test/review', (req, res) => {
   try {
-    const { id, rating } = req.body;
+    const { id, rating, time_taken_ms } = req.body;
 
     if (!id || typeof id !== 'number') {
       res.status(400).json({ error: 'Invalid or missing ID' });
@@ -158,8 +158,8 @@ app.post('/api/test/review', (req, res) => {
     // Calculate new metrics
     const newMetrics = calculateNextReview(currentData, rating as 1 | 2 | 3 | 4);
 
-    // Update the database
-    const updateStmt = db.prepare(`
+    // Update the database and insert a review log inside a transaction
+    const updateSentenceStmt = db.prepare(`
       UPDATE sentences 
       SET 
         fsrs_due = ?, 
@@ -171,18 +171,146 @@ app.post('/api/test/review', (req, res) => {
       WHERE id = ?
     `);
 
-    updateStmt.run(
-      newMetrics.fsrs_due,
-      newMetrics.fsrs_stability,
-      newMetrics.fsrs_difficulty,
-      newMetrics.fsrs_reps,
-      newMetrics.fsrs_lapses,
-      id
-    );
+    const insertLogStmt = db.prepare(`
+      INSERT INTO review_logs (sentence_id, rating, time_taken_ms)
+      VALUES (?, ?, ?)
+    `);
+
+    const reviewTransaction = db.transaction((metrics, sentenceId, reviewRating, timeTaken) => {
+      updateSentenceStmt.run(
+        metrics.fsrs_due,
+        metrics.fsrs_stability,
+        metrics.fsrs_difficulty,
+        metrics.fsrs_reps,
+        metrics.fsrs_lapses,
+        sentenceId
+      );
+      
+      insertLogStmt.run(sentenceId, reviewRating, timeTaken || null);
+    });
+
+    reviewTransaction(newMetrics, id, rating, time_taken_ms);
 
     res.json({ success: true, metrics: newMetrics });
   } catch (error) {
     console.error('Error updating review:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// GET /api/stats/overview
+// Returns counts for Total, Not Started, Learning, and Mastered
+app.get('/api/stats/overview', (req, res) => {
+  try {
+    const stmt = db.prepare(`
+      SELECT
+        COUNT(*) as total,
+        SUM(CASE WHEN is_learning = 0 THEN 1 ELSE 0 END) as not_started,
+        SUM(CASE WHEN is_learning = 1 AND (fsrs_stability < 21 OR fsrs_stability IS NULL) THEN 1 ELSE 0 END) as learning,
+        SUM(CASE WHEN is_learning = 1 AND fsrs_stability >= 21 THEN 1 ELSE 0 END) as mastered
+      FROM sentences;
+    `);
+    const result = stmt.get() as any;
+    
+    // Convert nulls to 0 in case the table is empty
+    res.json({
+      total: result.total || 0,
+      not_started: result.not_started || 0,
+      learning: result.learning || 0,
+      mastered: result.mastered || 0
+    });
+  } catch (error) {
+    console.error('Error fetching stats overview:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// GET /api/stats/retention
+// Calculates the global retention rate
+app.get('/api/stats/retention', (req, res) => {
+  try {
+    const stmt = db.prepare(`
+      SELECT
+        COUNT(*) as total_reviews,
+        SUM(CASE WHEN rating IN (2, 3, 4) THEN 1 ELSE 0 END) as successful_reviews
+      FROM review_logs;
+    `);
+    const result = stmt.get() as any;
+    
+    const total = result.total_reviews || 0;
+    const successful = result.successful_reviews || 0;
+    const retentionRate = total > 0 ? (successful / total) * 100 : 0;
+    
+    res.json({
+      total_reviews: total,
+      successful_reviews: successful,
+      retention_rate_percent: Number(retentionRate.toFixed(2))
+    });
+  } catch (error) {
+    console.error('Error fetching stats retention:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// GET /api/stats/forecast
+// Groups and counts sentences by fsrs_due date for the next 7 days
+app.get('/api/stats/forecast', (req, res) => {
+  try {
+    const stmt = db.prepare(`
+      SELECT 
+        date(fsrs_due) as due_date, 
+        COUNT(*) as count
+      FROM sentences 
+      WHERE is_learning = 1 
+        AND fsrs_due IS NOT NULL
+        AND date(fsrs_due) BETWEEN date('now') AND date('now', '+6 days')
+      GROUP BY due_date
+      ORDER BY due_date ASC;
+    `);
+    const results = stmt.all();
+    res.json(results);
+  } catch (error) {
+    console.error('Error fetching stats forecast:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// GET /api/stats/leeches
+// Returns the top 5 sentences with the highest fsrs_lapses
+app.get('/api/stats/leeches', (req, res) => {
+  try {
+    const stmt = db.prepare(`
+      SELECT id, english, german, fsrs_lapses
+      FROM sentences
+      WHERE fsrs_lapses > 0
+      ORDER BY fsrs_lapses DESC
+      LIMIT 5;
+    `);
+    const results = stmt.all();
+    res.json(results);
+  } catch (error) {
+    console.error('Error fetching stats leeches:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// GET /api/stats/heatmap
+// Returns count of reviews grouped by calendar day for the last 30 days
+app.get('/api/stats/heatmap', (req, res) => {
+  try {
+    const stmt = db.prepare(`
+      SELECT 
+        date(reviewed_at) as date, 
+        COUNT(*) as count
+      FROM review_logs
+      WHERE date(reviewed_at) >= date('now', '-30 days')
+      GROUP BY date
+      ORDER BY date ASC;
+    `);
+    const results = stmt.all();
+    res.json(results);
+  } catch (error) {
+    console.error('Error fetching stats heatmap:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });

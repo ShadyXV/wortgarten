@@ -26,12 +26,42 @@ export const fetchRandom = async (): Promise<Sentence> => {
   return res.json();
 };
 
-export const submitReview = async (id: number, rating: 1 | 2 | 3 | 4): Promise<{ success: boolean }> => {
+export const submitReview = async (id: number, rating: 1 | 2 | 3 | 4, time_taken_ms?: number): Promise<{ success: boolean }> => {
   const res = await fetch(`${API_BASE}/test/review`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id, rating }),
+    body: JSON.stringify({ id, rating, time_taken_ms }),
   });
   if (!res.ok) throw new Error('Failed to submit review');
+  return res.json();
+};
+
+export const fetchStatsOverview = async () => {
+  const res = await fetch(`${API_BASE}/stats/overview`);
+  if (!res.ok) throw new Error('Failed to fetch stats overview');
+  return res.json();
+};
+
+export const fetchStatsRetention = async () => {
+  const res = await fetch(`${API_BASE}/stats/retention`);
+  if (!res.ok) throw new Error('Failed to fetch stats retention');
+  return res.json();
+};
+
+export const fetchStatsForecast = async () => {
+  const res = await fetch(`${API_BASE}/stats/forecast`);
+  if (!res.ok) throw new Error('Failed to fetch stats forecast');
+  return res.json();
+};
+
+export const fetchStatsLeeches = async () => {
+  const res = await fetch(`${API_BASE}/stats/leeches`);
+  if (!res.ok) throw new Error('Failed to fetch stats leeches');
+  return res.json();
+};
+
+export const fetchStatsHeatmap = async () => {
+  const res = await fetch(`${API_BASE}/stats/heatmap`);
+  if (!res.ok) throw new Error('Failed to fetch stats heatmap');
   return res.json();
 };
