@@ -91,19 +91,9 @@ const LearnView: React.FC<LearnViewProps> = ({
           sentences.map((sentence) => (
             <div
               key={sentence.id}
-              className="bg-slate-900/80 glass-panel border border-slate-800 p-6 rounded-lg relative overflow-hidden backdrop-blur-sm flex flex-col md:flex-row md:items-center justify-between gap-6 transition-all duration-200 hover:border-slate-700"
+              className="bg-slate-900/80 glass-panel border border-slate-800 p-6 rounded-lg overflow-hidden backdrop-blur-sm flex flex-col md:flex-row md:items-center justify-between gap-6 transition-all duration-200 hover:border-slate-700"
             >
-              {/* Header Info */}
-              <div className="absolute top-3 right-4 flex items-center gap-2">
-                <EditSentenceModal
-                  id={sentence.id}
-                  initialEnglish={sentence.english}
-                  initialGerman={sentence.german}
-                  onUpdate={handleUpdateSentence}
-                />
-              </div>
-
-              <div className="flex-1 space-y-4 mt-4 md:mt-0">
+              <div className="flex-1 space-y-4">
                 {/* English */}
                 <div className="flex items-start gap-4">
                   <div className="mt-1">
@@ -147,7 +137,15 @@ const LearnView: React.FC<LearnViewProps> = ({
               </div>
 
               {/* Controls */}
-              <div className="flex flex-col gap-3 min-w-[160px]">
+              <div className="flex flex-col gap-3 min-w-[160px] md:self-start">
+                <div className="flex justify-end">
+                  <EditSentenceModal
+                    id={sentence.id}
+                    initialEnglish={sentence.english}
+                    initialGerman={sentence.german}
+                    onUpdate={handleUpdateSentence}
+                  />
+                </div>
                 <button
                   onClick={() => toggleReveal(sentence.id)}
                   className={`border transition-all duration-200 uppercase text-xs font-sans py-2 px-4 rounded-md tracking-widest active:scale-95 ${

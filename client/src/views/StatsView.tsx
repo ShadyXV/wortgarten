@@ -7,15 +7,19 @@ import {
   fetchStatsOverview, 
   fetchStatsRetention, 
   fetchStatsForecast, 
-  fetchStatsLeeches 
+  fetchStatsLeeches,
+  type StatsForecastItem,
+  type StatsLeech,
+  type StatsOverview,
+  type StatsRetention
 } from '../api';
 
 const StatsView: React.FC = () => {
   const [loading, setLoading] = useState(true);
-  const [overview, setOverview] = useState<any>(null);
-  const [retention, setRetention] = useState<any>(null);
-  const [forecast, setForecast] = useState<any[]>([]);
-  const [leeches, setLeeches] = useState<any[]>([]);
+  const [overview, setOverview] = useState<StatsOverview | null>(null);
+  const [retention, setRetention] = useState<StatsRetention | null>(null);
+  const [forecast, setForecast] = useState<StatsForecastItem[]>([]);
+  const [leeches, setLeeches] = useState<StatsLeech[]>([]);
 
   useEffect(() => {
     const loadData = async () => {

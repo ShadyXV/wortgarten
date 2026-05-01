@@ -6,6 +6,36 @@ import { fsrs, createEmptyCard, Rating, State, Card } from 'ts-fsrs';
 
 const app = express();
 const port = process.env.PORT || 3001;
+type SqlParam = string | number | null;
+type FsrsRating = 1 | 2 | 3 | 4;
+
+interface ReviewBody {
+  id?: unknown;
+  rating?: unknown;
+  time_taken_ms?: unknown;
+}
+
+interface SentenceUpdateBody {
+  english?: unknown;
+  german?: unknown;
+  fsrs_difficulty?: unknown;
+  is_learning?: unknown;
+}
+
+const parsePositiveInteger = (value: unknown): number | null => {
+  const parsed = typeof value === 'string' ? Number(value) : value;
+  return typeof parsed === 'number' && Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+};
+
+const isFsrsRating = (value: unknown): value is FsrsRating => (
+  typeof value === 'number' && [1, 2, 3, 4].includes(value)
+);
+
+const isValidDifficulty = (value: unknown): value is number => (
+  typeof value === 'number' && Number.isFinite(value) && value >= 1 && value <= 10
+);
+
+const isLearningFlag = (value: unknown): value is 0 | 1 => value === 0 || value === 1;
 
 app.use(cors());
 app.use(express.json());
@@ -32,8 +62,8 @@ app.get('/api/learn', (req, res) => {
 // Marks a sentence as "Added to Test"
 app.put('/api/learn/:id', (req, res) => {
   try {
-    const id = parseInt(req.params.id, 10);
-    if (isNaN(id)) {
+    const id = parsePositiveInteger(req.params.id);
+    if (id === null) {
       res.status(400).json({ error: 'Invalid ID parameter' });
       return;
     }
@@ -57,15 +87,15 @@ app.put('/api/learn/:id', (req, res) => {
 // Fetches paginated sentences with optional search
 app.get('/api/sentences', (req, res) => {
   try {
-    const page = parseInt(req.query.page as string || '1', 10);
-    const limit = parseInt(req.query.limit as string || '20', 10);
+    const page = parsePositiveInteger(req.query.page ?? '1') ?? 1;
+    const limit = parsePositiveInteger(req.query.limit ?? '20') ?? 20;
     const search = req.query.q as string || '';
     const difficulty = req.query.difficulty as string || 'all';
     const offset = (page - 1) * limit;
 
     let query = 'SELECT * FROM sentences';
     let countQuery = 'SELECT COUNT(*) as total FROM sentences';
-    const params: any[] = [];
+    const params: SqlParam[] = [];
     let hasWhere = false;
 
     if (search) {
@@ -119,22 +149,32 @@ app.get('/api/sentences', (req, res) => {
 // Updates the english, german text and optional fsrs properties
 app.put('/api/sentences/:id', (req, res) => {
   try {
-    const id = parseInt(req.params.id, 10);
-    const { english, german, fsrs_difficulty, is_learning } = req.body;
+    const id = parsePositiveInteger(req.params.id);
+    const { english, german, fsrs_difficulty, is_learning } = req.body as SentenceUpdateBody;
 
-    if (isNaN(id)) {
+    if (id === null) {
       res.status(400).json({ error: 'Invalid ID parameter' });
       return;
     }
 
-    if (!english || !german) {
+    if (typeof english !== 'string' || !english.trim() || typeof german !== 'string' || !german.trim()) {
       res.status(400).json({ error: 'Both english and german fields are required' });
+      return;
+    }
+
+    if (fsrs_difficulty !== undefined && !isValidDifficulty(fsrs_difficulty)) {
+      res.status(400).json({ error: 'Invalid fsrs_difficulty value' });
+      return;
+    }
+
+    if (is_learning !== undefined && !isLearningFlag(is_learning)) {
+      res.status(400).json({ error: 'Invalid is_learning value' });
       return;
     }
 
     // Determine what to update
     const updates: string[] = ['english = ?', 'german = ?'];
-    const params: any[] = [english, german];
+    const params: SqlParam[] = [english.trim(), german.trim()];
 
     if (fsrs_difficulty !== undefined) {
       updates.push('fsrs_difficulty = ?');
@@ -298,21 +338,27 @@ app.get('/api/random', (req, res) => {
 // Submit a spaced repetition rating for a sentence
 app.post('/api/test/review', (req, res) => {
   try {
-    const { id, rating, time_taken_ms } = req.body;
+    const { id, rating, time_taken_ms } = req.body as ReviewBody;
+    const sentenceId = parsePositiveInteger(id);
 
-    if (!id || typeof id !== 'number') {
+    if (sentenceId === null) {
       res.status(400).json({ error: 'Invalid or missing ID' });
       return;
     }
 
-    if (![1, 2, 3, 4].includes(rating)) {
+    if (!isFsrsRating(rating)) {
       res.status(400).json({ error: 'Invalid rating. Must be 1, 2, 3, or 4.' });
+      return;
+    }
+
+    if (time_taken_ms !== undefined && (typeof time_taken_ms !== 'number' || !Number.isFinite(time_taken_ms) || time_taken_ms < 0)) {
+      res.status(400).json({ error: 'Invalid time_taken_ms value' });
       return;
     }
 
     // Fetch current sentence data
     const getStmt = db.prepare('SELECT * FROM sentences WHERE id = ?');
-    const currentData = getStmt.get(id) as SentenceRow | undefined;
+    const currentData = getStmt.get(sentenceId) as SentenceRow | undefined;
 
     if (!currentData) {
       res.status(404).json({ error: 'Sentence not found' });
@@ -320,7 +366,7 @@ app.post('/api/test/review', (req, res) => {
     }
 
     // Calculate new metrics
-    const newMetrics = calculateNextReviewWithFSRS(currentData, rating as 1 | 2 | 3 | 4);
+    const newMetrics = calculateNextReviewWithFSRS(currentData, rating);
 
     // Update the database and insert a review log inside a transaction
     const updateSentenceStmt = db.prepare(`
@@ -360,7 +406,7 @@ app.post('/api/test/review', (req, res) => {
       insertLogStmt.run(sentenceId, reviewRating, timeTaken || null);
     });
 
-    reviewTransaction(newMetrics, id, rating, time_taken_ms);
+    reviewTransaction(newMetrics, sentenceId, rating, time_taken_ms);
 
     res.json({ success: true, metrics: newMetrics });
   } catch (error) {

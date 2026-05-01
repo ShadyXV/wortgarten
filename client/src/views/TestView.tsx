@@ -5,12 +5,16 @@ import { fetchDueTest, submitReview, fetchTestCounts } from '../api';
 import { Cpu, Volume2, Settings, Play, Activity } from 'lucide-react';
 import EditSentenceModal from '../components/EditSentenceModal';
 
+type TestSentence = Sentence & {
+  _isRetried?: boolean;
+};
+
 const TestView: React.FC = () => {
   const navigate = useNavigate();
   const [sessionStarted, setSessionStarted] = useState(false);
   const [selectedMode, setSelectedMode] = useState<'all' | 'again' | 'hard' | 'good' | 'easy'>('all');
   
-  const [testSentences, setTestSentences] = useState<Sentence[]>([]);
+  const [testSentences, setTestSentences] = useState<TestSentence[]>([]);
   const [isRevealed, setIsRevealed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [counts, setCounts] = useState({ all: 0, again: 0, hard: 0, good: 0, easy: 0 });
@@ -22,7 +26,7 @@ const TestView: React.FC = () => {
     retries: 0,
     firstTryCorrect: 0
   });
-  const [startTime, setStartTime] = useState(Date.now());
+  const [startTime, setStartTime] = useState(() => Date.now());
 
   useEffect(() => {
     if (!sessionStarted) {
@@ -57,7 +61,7 @@ const TestView: React.FC = () => {
     const ratingMap = { again: 1, hard: 2, good: 3, easy: 4 } as const;
     const numericRating = ratingMap[grade];
     const timeTakenMs = Date.now() - startTime;
-    const isFirstTry = !(currentSentence as any)._isRetried;
+    const isFirstTry = !currentSentence._isRetried;
 
     try {
       // Await backend to get true ts-fsrs mathematical calculations
