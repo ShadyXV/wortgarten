@@ -4,6 +4,7 @@ import {
   Dialog,
   DialogContent,
   DialogHeader,
+  DialogDescription,
   DialogTitle,
   DialogTrigger,
   DialogFooter,
@@ -92,7 +93,7 @@ const EditSentenceModal: React.FC<EditSentenceModalProps> = ({
     }}>
       <DialogTrigger asChild>
         <button
-          className="bg-transparent border border-slate-600/50 text-slate-400 hover:bg-slate-800 hover:text-cyan-400 transition-all duration-200 py-2 px-3 rounded-md active:scale-95 shadow-[0_0_10px_rgba(34,211,238,0.02)] flex items-center justify-center"
+          className="wg-icon-btn"
           title="Edit Sentence"
         >
           <Pencil className="w-4 h-4" />
@@ -102,40 +103,43 @@ const EditSentenceModal: React.FC<EditSentenceModalProps> = ({
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Pencil className="w-4 h-4 text-cyan-500" />
-            Edit System Entry
+            <Pencil className="w-4 h-4 text-[var(--wg-gold)]" />
+            Edit Wortkarte
           </DialogTitle>
+          <DialogDescription>
+            Update the German and English text for this vocabulary card.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
           <div className="space-y-2">
-            <label className="text-xs font-sans tracking-widest text-slate-500 uppercase">German</label>
+            <label className="wg-label">German</label>
             <Input
               value={german}
               onChange={(e) => setGerman(e.target.value)}
               placeholder="Enter German translation"
-              className="font-sans text-base"
+              className="wg-german text-base"
             />
           </div>
           
           <div className="space-y-2">
-            <label className="text-xs font-sans tracking-widest text-slate-500 uppercase">English</label>
+            <label className="wg-label">English</label>
             <Input
               value={english}
               onChange={(e) => setEnglish(e.target.value)}
               placeholder="Enter English translation"
-              className="font-sans text-base"
+              className="text-base"
             />
           </div>
 
           {initialDifficulty !== undefined && (
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-xs font-sans tracking-widest text-slate-500 uppercase">Learning State</label>
+                <label className="wg-label">Learning State</label>
                 <select
                   value={isLearning}
                   onChange={(e) => setIsLearning(parseInt(e.target.value, 10))}
-                  className="flex h-10 w-full rounded-md border border-slate-800 bg-slate-900/50 px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-cyan-500"
+                  className="wg-select"
                 >
                   <option value={0}>Not Started (Queue)</option>
                   <option value={1}>Active Learning</option>
@@ -143,12 +147,12 @@ const EditSentenceModal: React.FC<EditSentenceModalProps> = ({
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-sans tracking-widest text-slate-500 uppercase">Current Difficulty</label>
+                <label className="wg-label">Current Difficulty</label>
                 <select
                   value={difficulty}
                   onChange={(e) => setDifficulty(parseFloat(e.target.value))}
                   disabled={isLearning === 0}
-                  className="flex h-10 w-full rounded-md border border-slate-800 bg-slate-950/50 px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-cyan-500 disabled:opacity-50"
+                  className="wg-select disabled:opacity-50"
                 >
                   <option value={2.0}>Easy (&le; 3.0)</option>
                   <option value={4.0}>Good (3.1 - 5.0)</option>
@@ -156,30 +160,30 @@ const EditSentenceModal: React.FC<EditSentenceModalProps> = ({
                   <option value={9.0}>Again (&gt; 7.0)</option>
                 </select>
                 {isLearning === 1 && (
-                  <p className="text-[10px] text-cyan-500/70 font-mono">Current: {getDifficultyLabel(difficulty)}</p>
+                  <p className="text-[10px] text-[var(--wg-linden)] wg-tabular">Current: {getDifficultyLabel(difficulty)}</p>
                 )}
               </div>
             </div>
           )}
 
-          {error && <p className="text-xs text-rose-400 font-sans">{error}</p>}
+          {error && <p className="text-xs text-[var(--wg-coral)]">{error}</p>}
         </div>
 
         <DialogFooter>
           <button
             onClick={() => setOpen(false)}
             disabled={isSubmitting}
-            className="px-4 py-2 text-sm font-sans text-slate-400 hover:text-slate-300 transition-colors"
+            className="wg-btn wg-btn-ghost"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
             disabled={isSubmitting}
-            className="flex items-center gap-2 bg-cyan-900/30 border border-cyan-800 text-cyan-400 hover:bg-cyan-900/50 transition-all duration-200 uppercase text-xs font-sans py-2 px-6 rounded-md tracking-widest active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
+            className="wg-btn wg-btn-primary disabled:opacity-50 disabled:pointer-events-none"
           >
             {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            {isSubmitting ? 'Saving...' : 'Save Override'}
+            {isSubmitting ? 'Saving...' : 'Save Card'}
           </button>
         </DialogFooter>
       </DialogContent>

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Sentence } from '../types';
 import { fetchDueTest, submitReview, fetchTestCounts } from '../api';
-import { Cpu, Volume2, Settings, Play, Activity } from 'lucide-react';
+import { Cog, Volume2, Settings, Play, Activity, Target, BarChart3, CheckCircle, Leaf } from 'lucide-react';
 import EditSentenceModal from '../components/EditSentenceModal';
 
 type TestSentence = Sentence & {
@@ -132,97 +132,114 @@ const TestView: React.FC = () => {
 
   if (!sessionStarted) {
     return (
-      <div className="max-w-xl mx-auto py-12 transition-all duration-200">
-        <div className="flex items-center justify-center gap-3 mb-10 text-cyan-400/80">
+      <div className="wg-page max-w-xl py-10 transition-all duration-200">
+        <div className="wg-page-header mb-8">
+          <div className="wg-kicker">
           <Settings className="w-5 h-5" />
-          <h1 className="text-sm font-sans tracking-widest uppercase">Session Setup</h1>
+            <h1>Sitzung einrichten</h1>
+          </div>
         </div>
 
-        <div className="bg-slate-900/80 backdrop-blur-sm border border-slate-800 rounded-lg p-8 glass-panel space-y-8">
-          <p className="text-center font-sans text-slate-400 text-sm">
+        <div className="wg-panel p-8 space-y-8">
+          <p className="text-center wg-subtle text-sm">
             Select a target difficulty mode for your upcoming review session.
           </p>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <button
               onClick={() => setSelectedMode('all')}
-              className={`w-full md:col-span-2 flex items-center justify-between p-4 rounded-md border transition-all duration-200 ${
+              className={`w-full md:col-span-2 flex items-center justify-between gap-4 p-5 rounded-[8px] border transition-all duration-200 text-left ${
                 selectedMode === 'all' 
-                  ? 'bg-slate-800/80 border-cyan-500/50 text-cyan-400' 
-                  : 'bg-slate-900/50 border-slate-800 text-slate-400 hover:border-slate-700 hover:bg-slate-800/50'
+                  ? 'wg-panel-selected text-[var(--wg-gold)]'
+                  : 'border-[rgba(212,175,55,0.18)] bg-[rgba(8,15,21,0.28)] text-[rgba(235,227,214,0.72)] hover:border-[rgba(212,175,55,0.38)] hover:bg-[rgba(235,227,214,0.04)]'
               }`}
             >
-              <div className="flex flex-col items-start">
-                <span className="font-sans font-medium">Standard</span>
-                <span className="text-[10px] font-mono uppercase opacity-70">All Due Cards</span>
+              <div className="flex items-center gap-3">
+                <Leaf className="w-6 h-6" />
+                <div className="flex flex-col items-start">
+                  <span className="wg-serif text-xl">Standard</span>
+                  <span className="text-[10px] uppercase tracking-[0.14em] opacity-70">All Due Cards</span>
+                </div>
               </div>
-              <span className="text-lg font-mono">{counts.all}</span>
+              <span className="text-2xl wg-tabular">{counts.all}</span>
             </button>
 
             <button
               onClick={() => setSelectedMode('again')}
-              className={`w-full flex items-center justify-between p-4 rounded-md border transition-all duration-200 ${
+              className={`w-full flex items-center justify-between p-4 rounded-[8px] border transition-all duration-200 text-left ${
                 selectedMode === 'again' 
-                  ? 'bg-slate-800/80 border-rose-500/50 text-rose-400' 
-                  : 'bg-slate-900/50 border-slate-800 text-slate-400 hover:border-slate-700 hover:bg-slate-800/50'
+                  ? 'border-[rgba(229,101,94,0.58)] bg-[rgba(229,101,94,0.1)] text-[var(--wg-coral)]'
+                  : 'border-[rgba(212,175,55,0.18)] bg-[rgba(8,15,21,0.28)] text-[rgba(235,227,214,0.68)] hover:border-[rgba(229,101,94,0.34)] hover:bg-[rgba(229,101,94,0.06)]'
               }`}
             >
-              <div className="flex flex-col items-start">
-                <span className="font-sans font-medium">Again Focus</span>
-                <span className="text-[10px] font-mono uppercase opacity-70">Difficulty &gt; 7.0</span>
+              <div className="flex items-center gap-3">
+                <Target className="w-5 h-5" />
+                <div className="flex flex-col items-start">
+                  <span className="wg-serif text-lg">Again Focus</span>
+                  <span className="text-[10px] uppercase tracking-[0.14em] opacity-70">Difficulty &gt; 7.0</span>
+                </div>
               </div>
-              <span className="text-lg font-mono">{counts.again}</span>
+              <span className="text-xl wg-tabular">{counts.again}</span>
             </button>
 
             <button
               onClick={() => setSelectedMode('hard')}
-              className={`w-full flex items-center justify-between p-4 rounded-md border transition-all duration-200 ${
+              className={`w-full flex items-center justify-between p-4 rounded-[8px] border transition-all duration-200 text-left ${
                 selectedMode === 'hard' 
-                  ? 'bg-slate-800/80 border-orange-500/50 text-orange-400' 
-                  : 'bg-slate-900/50 border-slate-800 text-slate-400 hover:border-slate-700 hover:bg-slate-800/50'
+                  ? 'border-[rgba(224,122,95,0.58)] bg-[rgba(224,122,95,0.1)] text-[var(--wg-copper)]'
+                  : 'border-[rgba(212,175,55,0.18)] bg-[rgba(8,15,21,0.28)] text-[rgba(235,227,214,0.68)] hover:border-[rgba(224,122,95,0.34)] hover:bg-[rgba(224,122,95,0.06)]'
               }`}
             >
-              <div className="flex flex-col items-start">
-                <span className="font-sans font-medium">Hard Focus</span>
-                <span className="text-[10px] font-mono uppercase opacity-70">Difficulty 5.1 - 7.0</span>
+              <div className="flex items-center gap-3">
+                <BarChart3 className="w-5 h-5" />
+                <div className="flex flex-col items-start">
+                  <span className="wg-serif text-lg">Hard Focus</span>
+                  <span className="text-[10px] uppercase tracking-[0.14em] opacity-70">Difficulty 5.1 - 7.0</span>
+                </div>
               </div>
-              <span className="text-lg font-mono">{counts.hard}</span>
+              <span className="text-xl wg-tabular">{counts.hard}</span>
             </button>
 
             <button
               onClick={() => setSelectedMode('good')}
-              className={`w-full flex items-center justify-between p-4 rounded-md border transition-all duration-200 ${
+              className={`w-full flex items-center justify-between p-4 rounded-[8px] border transition-all duration-200 text-left ${
                 selectedMode === 'good' 
-                  ? 'bg-slate-800/80 border-cyan-500/50 text-cyan-400' 
-                  : 'bg-slate-900/50 border-slate-800 text-slate-400 hover:border-slate-700 hover:bg-slate-800/50'
+                  ? 'border-[rgba(29,182,167,0.58)] bg-[rgba(29,182,167,0.1)] text-[var(--wg-teal)]'
+                  : 'border-[rgba(212,175,55,0.18)] bg-[rgba(8,15,21,0.28)] text-[rgba(235,227,214,0.68)] hover:border-[rgba(29,182,167,0.34)] hover:bg-[rgba(29,182,167,0.06)]'
               }`}
             >
-              <div className="flex flex-col items-start">
-                <span className="font-sans font-medium">Good Review</span>
-                <span className="text-[10px] font-mono uppercase opacity-70">Difficulty 3.1 - 5.0</span>
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5" />
+                <div className="flex flex-col items-start">
+                  <span className="wg-serif text-lg">Good Review</span>
+                  <span className="text-[10px] uppercase tracking-[0.14em] opacity-70">Difficulty 3.1 - 5.0</span>
+                </div>
               </div>
-              <span className="text-lg font-mono">{counts.good}</span>
+              <span className="text-xl wg-tabular">{counts.good}</span>
             </button>
 
             <button
               onClick={() => setSelectedMode('easy')}
-              className={`w-full flex items-center justify-between p-4 rounded-md border transition-all duration-200 ${
+              className={`w-full flex items-center justify-between p-4 rounded-[8px] border transition-all duration-200 text-left ${
                 selectedMode === 'easy' 
-                  ? 'bg-slate-800/80 border-emerald-500/50 text-emerald-400' 
-                  : 'bg-slate-900/50 border-slate-800 text-slate-400 hover:border-slate-700 hover:bg-slate-800/50'
+                  ? 'border-[rgba(127,183,117,0.58)] bg-[rgba(127,183,117,0.1)] text-[var(--wg-linden)]'
+                  : 'border-[rgba(212,175,55,0.18)] bg-[rgba(8,15,21,0.28)] text-[rgba(235,227,214,0.68)] hover:border-[rgba(127,183,117,0.34)] hover:bg-[rgba(127,183,117,0.06)]'
               }`}
             >
-              <div className="flex flex-col items-start">
-                <span className="font-sans font-medium">Easy Review</span>
-                <span className="text-[10px] font-mono uppercase opacity-70">Difficulty &le; 3.0</span>
+              <div className="flex items-center gap-3">
+                <Leaf className="w-5 h-5" />
+                <div className="flex flex-col items-start">
+                  <span className="wg-serif text-lg">Easy Review</span>
+                  <span className="text-[10px] uppercase tracking-[0.14em] opacity-70">Difficulty &le; 3.0</span>
+                </div>
               </div>
-              <span className="text-lg font-mono">{counts.easy}</span>
+              <span className="text-xl wg-tabular">{counts.easy}</span>
             </button>
           </div>
 
           <button
             onClick={startSession}
-            className="w-full flex items-center justify-center gap-2 bg-slate-800 text-slate-200 border border-slate-700 hover:bg-slate-700 hover:text-white transition-all duration-200 uppercase text-sm font-sans py-4 rounded-md tracking-widest active:scale-95"
+            className="wg-btn wg-btn-primary w-full py-4"
           >
             <Play className="w-4 h-4" />
             Initialize Session
@@ -233,7 +250,7 @@ const TestView: React.FC = () => {
   }
 
   if (loading) {
-    return <div className="text-center py-20 font-sans text-cyan-500/70 animate-pulse tracking-widest text-sm">Loading Review...</div>;
+    return <div className="text-center py-20 text-[var(--wg-gold)] animate-pulse tracking-widest text-sm uppercase">Loading Review...</div>;
   }
 
   if (testSentences.length === 0) {
@@ -243,31 +260,31 @@ const TestView: React.FC = () => {
       
       return (
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="bg-slate-900/80 glass-panel border border-slate-800 p-8 rounded-lg inline-block w-full max-w-md">
-            <Activity className="w-12 h-12 text-emerald-500/50 mb-4 mx-auto" />
-            <h2 className="text-xl font-sans font-medium text-slate-200 tracking-wide mb-6">Session Complete</h2>
+          <div className="wg-panel p-8 inline-block w-full max-w-md">
+            <Activity className="w-12 h-12 text-[var(--wg-linden)] mb-4 mx-auto" />
+            <h2 className="wg-serif text-2xl font-medium text-[var(--wg-ivory)] tracking-wide mb-6">Session Complete</h2>
             
-            <div className="space-y-4 mb-8 text-left bg-slate-800/30 p-4 rounded-md border border-slate-700/50">
+            <div className="space-y-4 mb-8 text-left bg-[rgba(8,15,21,0.34)] p-4 rounded-[8px] border border-[rgba(212,175,55,0.16)]">
               <div className="flex justify-between items-center">
-                <span className="text-sm font-sans text-slate-400">Unique Cards Reviewed:</span>
-                <span className="font-mono text-cyan-400">{sessionStats.totalInitial}</span>
+                <span className="text-sm wg-subtle">Unique Cards Reviewed:</span>
+                <span className="wg-tabular text-[var(--wg-gold)]">{sessionStats.totalInitial}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm font-sans text-slate-400">First-Try Retention:</span>
-                <span className="font-mono text-emerald-400">{retentionRate}%</span>
+                <span className="text-sm wg-subtle">First-Try Retention:</span>
+                <span className="wg-tabular text-[var(--wg-linden)]">{retentionRate}%</span>
               </div>
             </div>
 
             <div className="flex gap-4 justify-center">
               <button 
                 onClick={() => setSessionStarted(false)} 
-                className="bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700 transition-all duration-200 uppercase text-xs font-sans py-3 px-6 rounded-md tracking-widest active:scale-95"
+                className="wg-btn"
               >
                 New Session
               </button>
               <button 
                 onClick={() => navigate('/stats')} 
-                className="bg-transparent border border-cyan-800 text-cyan-500 hover:bg-cyan-900/20 transition-all duration-200 uppercase text-xs font-sans py-3 px-6 rounded-md tracking-widest active:scale-95"
+                className="wg-btn wg-btn-secondary"
               >
                 View Dashboard
               </button>
@@ -280,25 +297,25 @@ const TestView: React.FC = () => {
     // Default Empty Queue
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
-        <div className="bg-slate-900/80 glass-panel border border-slate-800 p-8 rounded-lg inline-block max-w-md">
-          <Cpu className="w-12 h-12 text-cyan-500/50 mb-4 mx-auto" />
-          <h2 className="text-xl font-sans font-medium text-slate-200 tracking-wide">Queue Empty</h2>
+        <div className="wg-panel p-8 inline-block max-w-md">
+          <Cog className="w-12 h-12 text-[var(--wg-gold)] mb-4 mx-auto" />
+          <h2 className="wg-serif text-2xl font-medium text-[var(--wg-ivory)] tracking-wide">Queue Empty</h2>
           
-          <p className="font-sans text-slate-400 mt-4 text-sm">
+          <p className="wg-subtle mt-4 text-sm">
             {selectedMode === 'all' 
               ? "All due reviews for today are completed." 
               : `No cards currently match the "${selectedMode}" difficulty threshold.`}
           </p>
 
           {selectedMode !== 'all' && (
-            <p className="font-sans text-slate-500 mt-4 text-xs italic">
+            <p className="text-[rgba(235,227,214,0.42)] mt-4 text-xs italic">
               Cards naturally filter into Hard and Easy categories as you review them in Standard mode. Keep studying!
             </p>
           )}
           
           <button 
             onClick={() => setSessionStarted(false)} 
-            className="mt-8 mx-auto bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700 transition-all duration-200 uppercase text-xs font-sans py-2 px-6 rounded-md tracking-widest active:scale-95"
+            className="wg-btn mt-8 mx-auto"
           >
             Return to Setup
           </button>
@@ -313,20 +330,18 @@ const TestView: React.FC = () => {
   const easyCount = testSentences.filter(s => (s.fsrs_difficulty || 5.0) <= 3.0).length;
 
   return (
-    <div className="max-w-2xl mx-auto py-8 transition-all duration-200">
-      {/* Header */}
-      <div className="flex items-center justify-center gap-3 mb-6 text-cyan-400/80">
-        <Cpu className="w-5 h-5" />
-        <h1 className="text-sm font-sans tracking-widest uppercase">Review: {selectedMode}</h1>
+    <div className="wg-page max-w-2xl py-8 transition-all duration-200">
+      <div className="wg-page-header mb-6">
+        <div className="wg-kicker">
+          <Cog className="w-5 h-5" />
+          <h1>Review: {selectedMode}</h1>
+        </div>
       </div>
 
-      {/* Main Terminal Card */}
-      <div className="bg-slate-900/80 backdrop-blur-sm border border-slate-800 rounded-lg p-8 relative overflow-hidden transition-all duration-200">
-        
-        {/* HUD: Status Bar */}
-        <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-8 border-b border-slate-800/80 pb-4">
+      <div className="wg-panel wg-flashcard p-8 relative overflow-hidden transition-all duration-200">
+        <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-8 border-b border-[rgba(212,175,55,0.14)] pb-4">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-sans text-slate-400">Queue: <span className="font-mono text-slate-300">{testSentences.length}</span></span>
+            <span className="text-xs wg-subtle">Queue: <span className="wg-tabular text-[var(--wg-ivory)]">{testSentences.length}</span></span>
             <EditSentenceModal
               id={currentSentence.id}
               initialEnglish={currentSentence.english}
@@ -338,18 +353,18 @@ const TestView: React.FC = () => {
           </div>
           
           <div className="flex items-center gap-3">
-            <span className="text-[10px] font-sans text-slate-500 uppercase tracking-widest hidden md:inline">Complexity:</span>
+            <span className="wg-label hidden md:inline">Complexity:</span>
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[10px] uppercase tracking-widest font-sans text-slate-400 bg-slate-800/30 border border-rose-500/20 px-2 py-0.5 rounded-sm">
+              <span className="wg-badge wg-badge-again">
                 Again: {againCount}
               </span>
-              <span className="text-[10px] uppercase tracking-widest font-sans text-slate-400 bg-slate-800/30 border border-orange-500/20 px-2 py-0.5 rounded-sm">
+              <span className="wg-badge wg-badge-hard">
                 Hard: {hardCount}
               </span>
-              <span className="text-[10px] uppercase tracking-widest font-sans text-slate-400 bg-slate-800/30 border border-cyan-500/20 px-2 py-0.5 rounded-sm">
+              <span className="wg-badge wg-badge-good">
                 Good: {goodCount}
               </span>
-              <span className="text-[10px] uppercase tracking-widest font-sans text-slate-400 bg-slate-800/30 border border-emerald-500/20 px-2 py-0.5 rounded-sm">
+              <span className="wg-badge wg-badge-easy">
                 Easy: {easyCount}
               </span>
             </div>
@@ -358,42 +373,39 @@ const TestView: React.FC = () => {
         
         <div className="flex flex-col items-center text-center space-y-10">
           
-          {/* Target English */}
           <div className="space-y-3 w-full">
-            <p className="text-[10px] text-slate-500 uppercase font-sans tracking-widest">English</p>
-            <p className="text-2xl font-sans text-slate-200 font-medium tracking-tight leading-snug">
+            <p className="wg-label">English</p>
+            <p className="text-2xl text-[var(--wg-ivory)] font-medium tracking-tight leading-snug">
               {currentSentence.english}
             </p>
           </div>
 
-          {/* Decrypted German */}
           <div className="w-full pt-6 space-y-6 min-h-[160px] flex flex-col justify-center">
             {isRevealed ? (
               <div className="space-y-6 animate-in fade-in zoom-in-95 duration-200">
                 <audio src={`/audio/${currentSentence.audio}`} autoPlay className="hidden" />
                 
-                <p className="text-[10px] text-slate-500 uppercase font-sans tracking-widest">German</p>
+                <p className="wg-label">German</p>
                 <div className="flex flex-col md:flex-row items-center justify-center gap-5">
-                  <p className="text-3xl font-sans text-slate-200 tracking-tight">
+                  <p className="wg-german text-4xl text-[var(--wg-gold)] tracking-tight">
                     {currentSentence.german}
                   </p>
                   <button
                     onClick={(e) => playAudio(currentSentence.audio, e)}
-                    className="p-2 rounded-full border border-slate-700 text-slate-400 hover:bg-slate-800 transition-all duration-200 active:scale-95"
+                    className="wg-icon-btn"
                     title="Play Audio"
                   >
                     <Volume2 className="w-5 h-5" />
                   </button>
                 </div>
-                {/* Grammar / Source Info */}
-                <p className="text-xs font-sans text-slate-500 mt-2">
-                  Focus: <span className="text-slate-400">{currentSentence.source_word_de}</span>
+                <p className="text-xs wg-subtle mt-2">
+                  Focus: <span className="text-[var(--wg-linden)]">{currentSentence.source_word_de}</span>
                 </p>
               </div>
             ) : (
               <button
                 onClick={() => setIsRevealed(true)}
-                className="mx-auto bg-transparent border border-slate-700 text-slate-300 hover:bg-slate-800 transition-all duration-200 uppercase text-sm font-sans py-3 px-8 rounded-md tracking-widest active:scale-95"
+                className="wg-btn wg-btn-secondary mx-auto px-8 py-3"
               >
                 Show Answer
               </button>
@@ -401,13 +413,12 @@ const TestView: React.FC = () => {
           </div>
         </div>
 
-        {/* FSRS Control Grid */}
         {isRevealed && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-10 pt-6 border-t border-slate-800/80 animate-in slide-in-from-bottom-2 duration-200">
-            <button onClick={() => handleGrade('again')} className="border border-slate-700 text-slate-300 hover:bg-slate-800 transition-all duration-200 uppercase text-xs font-sans py-3 px-2 rounded-md tracking-widest active:scale-95">AGAIN</button>
-            <button onClick={() => handleGrade('hard')} className="border border-slate-700 text-slate-300 hover:bg-slate-800 transition-all duration-200 uppercase text-xs font-sans py-3 px-2 rounded-md tracking-widest active:scale-95">HARD</button>
-            <button onClick={() => handleGrade('good')} className="border border-slate-700 text-slate-300 hover:bg-slate-800 transition-all duration-200 uppercase text-xs font-sans py-3 px-2 rounded-md tracking-widest active:scale-95">GOOD</button>
-            <button onClick={() => handleGrade('easy')} className="border border-slate-700 text-slate-300 hover:bg-slate-800 transition-all duration-200 uppercase text-xs font-sans py-3 px-2 rounded-md tracking-widest active:scale-95">EASY</button>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-10 pt-6 border-t border-[rgba(212,175,55,0.14)] animate-in slide-in-from-bottom-2 duration-200">
+            <button onClick={() => handleGrade('again')} className="wg-btn wg-btn-danger">Again</button>
+            <button onClick={() => handleGrade('hard')} className="wg-btn wg-btn-secondary">Hard</button>
+            <button onClick={() => handleGrade('good')} className="wg-btn wg-btn-success">Good</button>
+            <button onClick={() => handleGrade('easy')} className="wg-btn">Easy</button>
           </div>
         )}
       </div>

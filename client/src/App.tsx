@@ -34,11 +34,10 @@ function App() {
 
   return (
     <BrowserRouter>
-      {/* Deep slate background, text-slate-300 for soft white readability */}
-      <div className="min-h-screen bg-slate-950 text-slate-300 font-sans selection:bg-cyan-500/30 selection:text-cyan-100">
+      <div className="wg-app-shell selection:bg-[rgba(127,183,117,0.28)] selection:text-[var(--wg-ivory)]">
         <Navbar />
         
-        <main className="max-w-4xl mx-auto px-4 py-8 relative z-10">
+        <main className="wg-main">
           <Routes>
             <Route path="/learn" element={
               <LearnView 
@@ -56,8 +55,8 @@ function App() {
           </Routes>
         </main>
 
-        <footer className="py-12 text-center text-slate-600 text-xs font-sans relative z-10">
-          &copy; 2026 Antigravity German Learning
+        <footer className="wg-footer">
+          &copy; 2026 Wortgarten German Learning
         </footer>
       </div>
     </BrowserRouter>

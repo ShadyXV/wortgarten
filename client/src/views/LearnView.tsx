@@ -3,7 +3,7 @@ import type { Sentence } from "../types";
 import AudioButton from "../components/AudioButton";
 import EditSentenceModal from "../components/EditSentenceModal";
 import { markAsLearning } from "../api";
-import { Terminal } from "lucide-react";
+import { BookOpen, RefreshCw, Sprout } from "lucide-react";
 
 interface LearnViewProps {
   sentences: Sentence[];
@@ -34,7 +34,7 @@ const LearnView: React.FC<LearnViewProps> = ({
       setSentences((prev) => prev.filter((s) => s.id !== id));
     } catch (error) {
       console.error("Failed to add to test", error);
-      alert("SYS.ERR: CONNECTION TO DATABASE SEVERED.");
+      alert("Could not add this card to review. Please try again.");
     }
   };
 
@@ -51,84 +51,81 @@ const LearnView: React.FC<LearnViewProps> = ({
   };
 
   return (
-    <div className="space-y-8 max-w-3xl mx-auto transition-all duration-200">
-      <div className="text-center py-4 flex flex-col items-center gap-4">
-        <div className="flex items-center gap-3 text-cyan-400/80 mb-2">
-          <Terminal className="w-5 h-5" />
-          <h1 className="text-sm font-sans tracking-widest uppercase">
-            Learning
-          </h1>
+    <div className="wg-page space-y-7 transition-all duration-200">
+      <div className="wg-page-header">
+        <div className="wg-kicker">
+          <BookOpen className="w-4 h-4" />
+          <h1>Lernen</h1>
         </div>
 
-        <p className="font-sans text-slate-400 text-sm tracking-tight">
-          <span className="text-cyan-400 font-mono">{sentences.length}</span>{" "}
+        <p className="wg-subtle text-sm tracking-tight">
+          <span className="wg-count">{sentences.length}</span>{" "}
           sentences ready to study.
         </p>
 
         <button
           onClick={onRefresh}
           disabled={loading}
-          className="mt-2 bg-transparent border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10 transition-all duration-200 uppercase text-xs font-sans py-2 px-6 rounded-md flex items-center gap-2 disabled:opacity-50 active:scale-95 shadow-[0_0_10px_rgba(34,211,238,0.05)]"
+          className="wg-btn wg-btn-secondary"
         >
+          <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
           {loading ? "Loading..." : "Refresh List"}
         </button>
       </div>
 
       <div className="grid gap-6">
         {sentences.length === 0 ? (
-          <div className="bg-slate-900/80 glass-panel border border-slate-800 p-8 rounded-lg text-center backdrop-blur-sm">
-            <span className="text-[10px] text-slate-500 font-mono uppercase">
-              SYS.STATUS.EMPTY
+          <div className="wg-panel p-8 text-center">
+            <span className="wg-badge">
+              Queue Empty
             </span>
-            <p className="font-sans font-medium text-slate-200 text-lg mt-4 tracking-wide">
-              No New Files in Queue
+            <p className="wg-serif font-medium text-[var(--wg-ivory)] text-2xl mt-4 tracking-wide">
+              No New Cards in the Garden
             </p>
-            <p className="font-mono text-slate-500 text-xs mt-2 uppercase">
-              Request a new batch from the mainframe.
+            <p className="wg-subtle text-xs mt-2 uppercase tracking-[0.16em]">
+              Refresh when you are ready for another batch.
             </p>
           </div>
         ) : (
           sentences.map((sentence) => (
             <div
               key={sentence.id}
-              className="bg-slate-900/80 glass-panel border border-slate-800 p-6 rounded-lg overflow-hidden backdrop-blur-sm flex flex-col md:flex-row md:items-center justify-between gap-6 transition-all duration-200 hover:border-slate-700"
+              className="wg-panel wg-row p-6 overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6"
             >
               <div className="flex-1 space-y-4">
-                {/* English */}
                 <div className="flex items-start gap-4">
                   <div className="mt-1">
                     <AudioButton filename={sentence.audio} />
                   </div>
                   <div>
-                    <p className="text-[10px] text-slate-500 uppercase font-sans tracking-widest mb-1">
+                    <p className="wg-label mb-1">
                       English
                     </p>
-                    <p className="text-xl font-sans text-slate-200 font-medium tracking-tight">
+                    <p className="text-xl text-[var(--wg-ivory)] font-medium tracking-tight">
                       {sentence.english}
                     </p>
                   </div>
                 </div>
 
-                {/* German */}
                 <div className="pl-[52px]">
-                  <p className="text-[10px] text-slate-500 uppercase font-sans tracking-widest mb-1">
+                  <p className="wg-label mb-1">
                     German
                   </p>
                   {revealedIds.has(sentence.id) ? (
                     <div className="animate-in fade-in slide-in-from-top-1 duration-200">
-                      <p className="text-2xl font-sans text-cyan-400 tracking-tight shadow-[0_0_10px_rgba(34,211,238,0.1)]">
+                      <p className="wg-german text-3xl tracking-tight text-[var(--wg-gold)]">
                         {sentence.german}
                       </p>
-                      <p className="text-xs font-sans text-slate-500 mt-2">
+                      <p className="text-xs wg-subtle mt-2">
                         Focus:{" "}
-                        <span className="text-slate-400 font-sans">
+                        <span className="text-[var(--wg-linden)]">
                           {sentence.source_word_de}
                         </span>
                       </p>
                     </div>
                   ) : (
-                    <div className="h-8 w-48 bg-slate-800/50 border border-slate-700/50 rounded flex items-center px-3 mt-1">
-                      <span className="text-[10px] text-slate-500 font-sans tracking-widest uppercase">
+                    <div className="h-8 w-48 border border-[rgba(212,175,55,0.18)] bg-[rgba(8,15,21,0.38)] rounded-[7px] flex items-center px-3 mt-1">
+                      <span className="text-[10px] text-[rgba(235,227,214,0.34)] tracking-widest uppercase">
                         Hidden...
                       </span>
                     </div>
@@ -136,7 +133,6 @@ const LearnView: React.FC<LearnViewProps> = ({
                 </div>
               </div>
 
-              {/* Controls */}
               <div className="flex flex-col gap-3 min-w-[160px] md:self-start">
                 <div className="flex justify-end">
                   <EditSentenceModal
@@ -148,18 +144,19 @@ const LearnView: React.FC<LearnViewProps> = ({
                 </div>
                 <button
                   onClick={() => toggleReveal(sentence.id)}
-                  className={`border transition-all duration-200 uppercase text-xs font-sans py-2 px-4 rounded-md tracking-widest active:scale-95 ${
+                  className={`wg-btn ${
                     revealedIds.has(sentence.id)
-                      ? "bg-slate-800/50 border-slate-700 text-slate-400 hover:bg-slate-800"
-                      : "bg-transparent border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10 shadow-[0_0_10px_rgba(34,211,238,0.05)]"
+                      ? "wg-btn-ghost"
+                      : "wg-btn-secondary"
                   }`}
                 >
                   {revealedIds.has(sentence.id) ? "Hide Answer" : "Show Answer"}
                 </button>
                 <button
                   onClick={() => handleAddToTest(sentence.id)}
-                  className="bg-transparent border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 transition-all duration-200 uppercase text-xs font-sans py-2 px-4 rounded-md tracking-widest active:scale-95 shadow-[0_0_10px_rgba(16,185,129,0.05)]"
+                  className="wg-btn wg-btn-success"
                 >
+                  <Sprout className="w-3.5 h-3.5" />
                   Add for Review
                 </button>
               </div>
