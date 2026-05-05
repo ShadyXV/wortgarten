@@ -4,6 +4,9 @@ Wortgarten is a German vocabulary learning app with sentence-based study, audio 
 
 The project pairs a premium dark botanical notebook interface with a practical FSRS-powered review system. It is built as a local-first full-stack TypeScript app: a Vite/React client talks to an Express API backed by SQLite.
 
+<img width="2266" height="1738" alt="Screenshot 2026-05-05 at 19 56 41" src="https://github.com/user-attachments/assets/bde695aa-5792-4e87-83b7-7656b185b543" />
+
+
 ## Features
 
 - Learn new German sentences in small randomized batches.
